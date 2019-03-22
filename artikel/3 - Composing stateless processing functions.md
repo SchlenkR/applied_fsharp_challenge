@@ -141,4 +141,18 @@ let blendedDistortion drive blend i =
     |> mix blend hpFiltered
 ```
 
-Benefit: Wir bekommen mehrere Dinge unter unsere Kontrolle: Evaluierung und ...
+// TODO: Erklären:
+// Every time, a value has to be used more than once in the rest of
+// the computation, we encode the rest of the computation as a "continuation" function
+// with exactly one parameter. This function is composed with the "things that came before"
+// with the "bind" (>=>) operator. We can then again use this technique _inside_ of a
+// "rest" function, and again, and again, with each continuation function havina access
+// to the parameters all "rest" functions that enclose it.
+// In other words: A nested "rest" function has access to all values that are bound
+// to identifiers of outer "rest" functions. This way of composing functions is more powerful
+// than the >> operator combines functions. >> builds a chain, where an element in the chain
+// has access only to it's direct precessor; not to all precessors.
+
+// TODO: Bild: Schalenmodell
+
+Benefit: Wir bekommen mehrere Dinge unter unsere Kontrolle: Evaluierung und ... and with this in mind, we can make one step further.
