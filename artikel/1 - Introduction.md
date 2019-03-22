@@ -3,7 +3,7 @@
 
 ## Einleitung und Motivation
 
-In the analog world, physical quantities like the electric currency are used to represent a signal that is finally sent to a speaker. Thes quantities are created and altered by low-level components like condensors, resistors, magnetic coils, transistors, diods, etc. which are connected to each others in circuits. They are composed to larger components like operational amplifiers, that are again used to build modules like filters and oscillators which synthesizers and effect processors are made of. Digital audio signal processing (Audio-DSP) is about modeling these components on different levels of abstraction, resulting in the simulation of circuits similar to their analog counterparts (of course, there is no limit in creating completely new forms of synthesizers and effects). If you are already familiar with languages like Java or C#, you might think that DSP fits perfectly in the world of object-oriented programming languages: With it's basic idea of encapsulating mutable state by behavior (methods) and giving it an addressable identity (instance pointer), it maps directly to the concept of having physical entities (like condensors or transistors) that "exist" and hold their's own state that changes over time. This article is about an alternative approach of audio-DSP which is solely based on the paradigm of pure functions using a language called F#.
+In the analog world, physical quantities like the electric currency are used to represent a signal that is finally sent to a speaker. Thes quantities are created and altered by low-level components like condensors, resistors, magnetic coils, transistors, diods, etc. which are connected to each others in circuits. They are composed to larger components like operational amplifiers, that are again used to build modules like filters and oscillators which synthesizers and effect processors are made of. Digital audio signal processing (Audio-DSP) is about modeling these components on different levels of abstraction, resulting in the simulation of circuits similar to their analog counterparts (of course, there is no limit in creating completely new forms of synthesizers and effects). If you are already familiar with languages like Java or C#, you might think that DSP fits perfectly in the world of object-oriented programming languages: With it's basic idea of encapsulating mutable state by behavior (methods) and giving it an addressable identity (instance pointer), it maps directly to the concept of having physical entities (like condensors or transistors) that "exist" and hold their's own state that changes over time. This article is about an alternative approach of audio-DSP which is solely based on the paradigm of pure functions using a language called F#. TODO: Benefits
 
 (******
 We will learn that object-oriented concept like instances (and therfore instanciation) as well as aspects of method evaluation can be left out completely, leading to a way of describing signal flows and circuits purely focussing on how values flow through the system.
@@ -47,23 +47,15 @@ We treat a 'sequence of values' like a stream instead of a random access persist
 
 * Composable (nicht immer als Ganzes schreiben) and reusable
 
+* [input signals]: normalized floats with range of -1..1 --> oder 0..1? TODO
+
+* Signale sind symmetrisch (schwingen um die Null-Linie). Das muss oft beachtet werden, wenn wir Algorithmen programmieren.
+
+* Mono
+
 ## Goals
 
 
-## Stateless Signal Processing
-
-Let's start with something simple.
-
-* Gegeben ist immer ein Ausgangssignal
-* Das wird angezeigt in Form einer Werteliste sowie eines Plots.
-* Blockschaltbild
-
-* Stateless Stream Processing
-    * Amplifier:
-        * float -> float
-        * Bild zeigen: Input / Output
-    * Another example: Limiter
-        * float -> float
 
 
 
@@ -71,11 +63,7 @@ Let's start with something simple.
 
 
 
-
-
-
-
-
+## Nachvollziehen: Die Beispiele können in VS Code / Ionide, F# Interactive nachvollzogen werden.
 
 
 
