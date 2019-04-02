@@ -115,3 +115,7 @@ let blendedDistortion drive blend i =
         (amped |> limit 0.5) // hardLimited
         (amped |> limit 1.0) // softLimited
     |> mix blend hpFiltered
+
+type WireBuilder() =
+    member __.Bind(m, f) = bind m f
+    member __.Return(v) = v

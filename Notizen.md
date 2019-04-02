@@ -30,3 +30,17 @@ mix: params sollen nicht original und processed heien, sondern a und b
 * Mehr zu Typinferenz sagen (Seite 2 oder so)
 
 Soll ich wirklich so viel dazu sagen, dass float->float so wichtig ist? Ist ja gar nicht soooo wichtig.
+
+* Generell viel mehr Zwischenüberschriften einfügen
+
+* Kurze EInführung in F#
+    * Function evaluation
+    * Precedence: myList |> rest a
+    * Infix operators
+    * |> und >>
+    * A word on sequences and List and Array
+
+* TLDR: Instead of writing ... we can write ... (Keine Instanziierung; keine Evaluierung)
+
+
+Counter: In OOP, there is a disadvantage: We couldn't modulate the desiredSampleLength parameter. Now, we can!
