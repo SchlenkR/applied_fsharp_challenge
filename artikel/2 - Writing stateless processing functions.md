@@ -26,7 +26,7 @@ Knowing that we are so far interested in functions that transform scalar inputs 
 
 ### Amplifier
 
-Amplifying signals is a science for itself and one can spend a lot of money buying analog gear that sounds just "right" - where right is a completely subjective term based on user preferences. For us, a simple solution will be enough: Amplification of a signal in our context means: Scale values linearly. We can do that like this:
+Amplifying signals is a science for itself and one can spend a lot of money buying analog gear that sounds just "right" - where right is a subjective term based on user preferences. For us, a simple solution will be enough: Amplification of a signal in our context means: Scale values linearly. We can do that like this:
 
 [Bild: Signal vorher - nachher]
 
@@ -34,26 +34,26 @@ Linear scaling of a value is mathematically just a multiplication, so that is in
 
 ```fsharp
 // float -> float -> float
-let amp factor input : float = input * factor
+let amp amount input : float = input * amount
 ```
 
 --- 
-* We only write the "returning" type (float). The types of factor and i are infered. Can also write it with explicit types for all input params: 
+* We only write the "returning" type (float). The types of amount and i are infered. Can also write it with explicit types for all input params: 
 ```fsharp
-let amp (factor: float) (i: float) : float = i * factor
+let amp (amount: float) (input: float) : float = input * amount
 ```
 
 * We could also write it with inline. That's a powerful feature and works for all types having * defined. For now, we use explicit return types and implicit 
 
 Currying: Makes it simper
 ```fsharp
-let amp factor : float = (*) factor
+let amp amount : float = (*) amount
 ```
 
 Currying is extremely important for us, and we will understand why when it comes to composing our functions.
 
 (*
-Again, we could leave out factor, having defined just an alias for the (*) function:
+Again, we could leave out amount, having defined just an alias for the (*) function:
 ```fsharp
 let amp = (*)
 ```
@@ -81,10 +81,12 @@ Side Note: * Signale sind symmetrisch (schwingen um die Null-Linie). Das muss of
 
 ### Applying the processing functions
 
-TODO: Erklären: We have an audio runtime. That runtime expects functions in the form of float -> float. Recipe:
-    * Input sequence
-    * processing function
-    * Seq
+TODO: Erklären: 
+    * We have an audio runtime. That runtime expects functions in the form of float -> float. Recipe:
+        * Input sequence
+        * processing function
+        * Seq
+    * Currently, we are not interested in applying our functions to get a result, this comes later. We focus on writing (and composing) processing / generator functions.
 
 ```fsharp
 [ 0.1; 0.2; 0.8; -0.2; -0.7 ] |> Seq.map (limit 0.5)

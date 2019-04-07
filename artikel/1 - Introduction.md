@@ -21,16 +21,12 @@ Key point: Eigentlich denkt man: OO,  ...this leads to - well, it lead me to pur
 
 ## A Brief Definition of DSP
 
-Digital signal processing - in contrast to analog signal processing - deals with deals with quantized values over a discrete time. What does it mean: Take an analog synthesizer. It creates and outputs a signal based on electric currency - which is continuous from a physical point of view. A computer cannot process values in a continuous way - it has to *quantize* two things:
+Digital signal processing - in contrast to analog signal processing - deals with quantized values over a discrete time. What does it mean: Take an analog synthesizer. It creates and outputs a signal based on electric currency - which is continuous from a physical point of view. A computer cannot process values in a continuous way - it has to *quantize* two things:
     * Time: This is called sampling, and happens for an audio signal usually at multiples of 44100 times per second (44.1 kHz). Why 44100? Look at TODO: Sample Theorem.
     * Values: At each sample point, a value must be captured (analog to the electric currency). This happens usually in a number, represented by a 16, 32 or 64 bit value. In this article, we use a F# "float" value, which is a 64 bit floating point number.
 
-Having understood the definition from above, it's easy to define what a signal is: **A signal is a value that changes over time**. This means: you could take a sequence of time-related-values like this to represent a digital signal:
+Having understood the definition from above, it's easy to define what a signal is: **A signal is a value that changes over time**. Sampling of these values with constant time intervals results in a sequence of values:
 
-[ (0.0<s>, 0.0); (0.1<s>, 0.3); ... ]
-(where the 1st tuple element is the time and the second is the value.)
-
-Plotting this time-value sequence leads to this:
 TODO: Plot
 
 As we can see, we have captured a sine wave with the *amplitude* of 0.5 (see here TODO) and a frequence of 1Hz (1 complete cycle in 1s). The sample rate is 16Hz. Why? Because we have captured 16 samples in 1 second.

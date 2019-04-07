@@ -1,11 +1,13 @@
 
 ## Composing stateless processing functions
 
-The amplify and limit functions are so small that we won't break them into smaller pieces for reusing them. They are kind of "atoms" in our context. But of course, we want to do the opposite: Compose them to larger, more abstract functions (that themselves can be composed again, to more abstract functions, and so on).
+### Serial Composition
+
+The amplify and limit functions are so small that we won't break them into smaller pieces for reusing them. They are kind of "atoms" in our context. But of course, we want to do the opposite: Compose them to larger, higher-level functions (that themselves can be composed again, to higher-level functions, and so on).
 
 Let's say we want to build some nice distortion effect that is defined in this way:
 
-[Blockschaltbild]
+[Blockschaltbild_A]
 
 ```fsharp
 let distort0 drive i =
@@ -41,19 +43,21 @@ Remember the previous chapter, it was remarked that currying was very important.
 
 So, curryin can also be seen as a way of providing "factories for other functions". And it is important that we design our "factory functions" in a way that all parameters come first, then followed by the input value to have a float->float function at the end. When things get more complex in the following section, the technique of factory functions will help us a lot.
 
-1) Erklären; Blockschaltbild. This is nice, because it is just a "Bauanleitung" for a signal flow. Which means: We don't have to care about evaluating things. And we do not have to specify an "i" (input) explicitly; this "ergibt sich" from the composition itself.
+3) Erklären; Blockschaltbild. This is nice, because it is just a "Bauanleitung" for a signal flow. Which means: We don't have to care about evaluating things. And we do not have to specify an "i" (input) explicitly; this "ergibt sich" from the composition itself.
 
 [TODO: Depending on the character of the circuit, we will use a mix of all 4 forms.]
 
-### Extending the Example
+### Parallel Composition (TODO: Stimmt das?)
 
-Now that we understand what serial composition is, we know that it is useful to have functions of type float->float, and we understand that serial composition of these functions can be done by using the *>>* operator.
+TODO: Parallel doesn't (necessarily) mean parallel execution. This can be, but doesn't have to be.
+
+Now that we understand what serial composition is, we know that it is useful to have functions of type float->float, and we understand that serial composition of these functions can be done by using the *>>* or *|>* operators.
 
 Let's extend our sample in a way where the techniques of serial composition is not sufficient.
 
 The distortion effect we just engineered sounds nice, and we want to be able to "blend it in" together with a high-pass filtered version of the original signal. This high-pass signal shall be used for distortion, too. Visualizing this in a block diagram is easy [TODO: inhaltlich nicht korrekt (siehe Codebeispiel); viel mehr erklären]:
 
-[TODO: Block diagram]
+[BS_B]
 
 Note that for now, we don't have a high pass filter, so we just use a placeholder function that works like a normal stateless processing function of type float->float:
 
@@ -88,13 +92,17 @@ let blendedDistortion drive blend i =
 
 Here, we have introduced 2 identifiers: hpFiltered and amped. By doing so, we are able to use the same values in more than one place in the rest of our computation. Since we are dealing with actual values, composing our functions in the way we did with >> operator doesn't work here; but that's not a problem: We achieved a readable, non-redundant way of describing a signal flow without any boilerplate code.
 
+*** Festhalten:
+Our rule is: Each time we branch a signal, we give it a name (there are alternative ways of branching that don't need identifiers (TODO: arrows)).
+***
+
 #### A note on the signature of "blendedDistortion"
 TODO: It's again float -> float. This is important because we can pass this function to our "audio runtime".
 
 
-### Alternative way of composing functions
+### Alternative notation
 
-Since we will later deal with global and local "state", let's have a look at another way of writing the "blendedDistortion" computation. This might look unuseful for now, but having that technique in mind, we will be able to understand it's value later and build other helpful techniques upon it.
+Since we will later deal with blocks that have access to global and local "state", let's have a look at another way of writing the "blendedDistortion" computation function. This might look unuseful for now, but having that technique in mind, we will be able to understand it's value later and build other helpful techniques upon it.
 
 The idea is to view the computation from above with it's identifiers as *nested functions*. These functions can then be composed by a powerful "composition function" that is written for the domain it shall be used in. This composition function is called "bind", and we define bind (for now) like this:
 
@@ -109,7 +117,7 @@ let bind (value: 'a) (rest: 'a -> 'b) : 'b = rest value // 'a -> ('a -> 'b) -> '
 
 (Note that it is possible to leave out all float type annotations, and we get a generalized version of the bind function).
 
-With bind, we can re-write our "blendedDistortion" function in a way that looks more like function composition (that itself is - of course - not a benefit in general; it's just a metter of taste. The benefit is another one - we will see...):
+With bind, we can re-write our "blendedDistortion" function in a way that looks more like function composition (that itself is - of course - not a benefit in general; it's just a metter of taste. The benefit is another one - as we will see...):
 
 ```fsharp
 let blendedDistortion drive blend i =
@@ -136,7 +144,7 @@ let blendedDistortion drive blend i =
     ))
 ```
 
-That's more clear: [TODO: Erklären]
+That's more clear: [TODO: Erklären; Wir brauchen kein let]
 
 In F#, we can also define an infix operator for for "bind" to make our computation look even more clear:
 
@@ -152,11 +160,17 @@ let blendedDistortion drive blend i =
 ```
 
 TODO: Erklären:
-Every time, a value has to be used more than once in the rest of the computation, we encode the rest of the computation as a "continuation" function with exactly one parameter. This function is composed with the "things that came before" with the "bind" (>=>) operator. We can then again use this technique _inside_ of a "rest" function, and again, and again, with each continuation function having access to the parameters all "rest" functions that enclose it. In other words: A nested "rest" function has access to all values that are bound to identifiers of outer "rest" functions. This way of composing functions is more powerful than the >> operator combines functions. >> builds a chain, where an element in the chain has access only to it's direct precessor; not to all precessors.
+Every time, a value has to be used more than once in the rest of the computation, we encode the rest of the computation as a "continuation" function with exactly one parameter. This function is composed with the "things that came before" with the "bind" (>=>) operator. We can then again use this technique _inside_ of a "rest" function, and again, and again, with each continuation function having access to the parameters all "rest" functions that enclose it. In other words: A nested "rest" function has access to _all values_ that are already bound to identifiers. This means that there is a data context built up that accumulates more values with each composition step that is accessible to the following parts in the computation.
 
-// TODO: Bild: Schalenmodell
+Note: This way of composing functions is more powerful than the >> operator combines functions. >> builds a chain, where an element in the chain has access only to it's direct precessor; not to all precessors. There is no growing data context during the evaluation steps.
 
-So what's the benefit of all that:
+With "bind" in mind, we can revisit the block diagram of "blendedDistortion" that visualizes the pattern we just worked out:
+
+[Bild_Schalenmodell]
+
+Having identified a pattern for similar class of problems is a good thing. And it's getting even better because there are some benefits we haven't looked at so far and that will help a lot in other upcoming problems:
+
+Benefit of having "bind":
     * Hook
     * Do things "behind the scenes"
     * We gain control over the execution that is performed (usually, this aspect is fully out of the programmer's control). 

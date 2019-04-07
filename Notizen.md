@@ -44,3 +44,15 @@ Soll ich wirklich so viel dazu sagen, dass float->float so wichtig ist? Ist ja g
 
 
 Counter: In OOP, there is a disadvantage: We couldn't modulate the desiredSampleLength parameter. Now, we can!
+
+* Anhang:
+    * Alternative: Man hätte auch einen Dictionary passing Ansatz wählen können - Performance
+    * FETT: "Instead of identifying "things" by a name or by a reference pointer, we identify them by their position inside of a structure."
+
+Öfter mal "Key Points" am Ende von Sektionen machen bzw. am Anfang.
+
+Exkurs: What is state? State is made up of a bunch of things:
+    A location in a global space
+    A value that resides in that location
+    The location can be accessed (read or written) from several other points
+    Mutation is necessary (beause if not; copy would be suficcient)
