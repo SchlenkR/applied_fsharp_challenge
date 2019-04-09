@@ -10,7 +10,7 @@ Let's say we want to build some nice distortion effect that is defined in this w
 [Blockschaltbild_A]
 
 ```fsharp
-let distort0 drive i =
+let distort drive i =
     let amplified = amp drive i
     let result = limit 1.0 amplified
     result
