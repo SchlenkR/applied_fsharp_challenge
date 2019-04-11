@@ -51,44 +51,47 @@ This question leads to an interesting fundamental difference of the functional a
 
 ### An Object Oriented Approach
 
+(You can find some more information in the appendix [here TODO].
+<!-- In short, the important things are these: Locality implies that there must be some kind of "existence" of "things" over "time". So identity is made up of an address rather than by equal values. This is modeled by having addresses and pointer, which are accessible in a bigger context and preserved over a certain livetime. Then there is state that can be changed, because if it wouldn't be possible to change the instance state, the necessarity for having instances and pointers to them would not exist, because it wouldn't make a difference pointing to a thing or copying a thing. The behavior is the "gate" that everyone who wants to access (read or write) the instance state has to pass. This helps to ensure consistency during runtime by limiting access (mainly state changes) to special local places in the program. -->
+)
+
 So let's go for it using an object oriented approach at first and see where it leads us to.
 
 "Object oriented programming is the thing with classes." I hear this sentence often, and it might seem true - not for all, but for the majority of mainstream OOP-languages. I think this doesn't capture the essence of object-oriented programming paradigm. A more basic definition of what OOP might be is when these 3 things occure together:
 
-* Data is held in objects that have a referential identity (not a value-based identity).
-* Object values can change over time, while it's identity remains (objects are mutable).
-* Data access is protected via methods to help ensuring consistency during runtime (encapsulation of local state).
+* References: Data is held in objects that have a referential identity (not a value-based identity).
+* Mutability: Object values can change over time, while it's identity remains (objects are mutable).
+* Encapsulation: Data access is protected via methods to help ensuring consistency during runtime (encapsulation of local state).
 
-You can find some more information in the appendix [here TODO].
-<!-- In short, the important things are these: Locality implies that there must be some kind of "existence" of "things" over "time". So identity is made up of an address rather than by equal values. This is modeled by having addresses and pointer, which are accessible in a bigger context and preserved over a certain livetime. Then there is state that can be changed, because if it wouldn't be possible to change the instance state, the necessarity for having instances and pointers to them would not exist, because it wouldn't make a difference pointing to a thing or copying a thing. The behavior is the "gate" that everyone who wants to access (read or write) the instance state has to pass. This helps to ensure consistency during runtime by limiting access (mainly state changes) to special local places in the program. -->
-
-Reading the above thesis, you see that "classes" or "inheritance" don't appear at all, and there are indeed other techniques than classes that fulfill it. The upcoming OOP-samples use non-class techniques with functions as objects, because that is closer to what we will end up with. The approach is still object-oriented due to the fact that they have an identity that encapsulates mutable state:
-
+These three characteristics can be seen as features, but in the same time, we have to deal with their consequences, and this has significant impact on how we write code. The upcoming OOP-samples use non-class techniques with functions as objects, because that is closer to what we will end up with. The approach is still object-oriented due to the fact that they have an identity that encapsulates mutable state:
 
 ```csharp
-public static Func<double> FlipCounter(int desiredSampleLength)
+public class FlipCounter
 {
-    var initialState = new
+    private int currentCount;
+    private bool isInSilentMode;
+
+    public FlipCounter()
     {
-        count = 0,
-        isInSilentMode = false
-    };
+        this.DesiredSampleLength = 10;
+    }
 
-    var state = initialState;
+    public int DesiredSampleLength { get; set; }
 
-    return new Func<double>(() =>
+    public double ProcessNextValue()
     {
-        state =
-            state.count >= desiredSampleLength
-            ? initialState
-            : new
-                {
-                    count = state.count + 1,
-                    isInSilentMode = state.isInSilentMode
-                };
+        if (this.currentCount >= this.DesiredSampleLength)
+        {
+            this.currentCount = 0;
+            this.isInSilentMode = !this.isInSilentMode;
+        }
+        else
+        {
+            this.currentCount++;
+        }
 
-        return state.isInSilentMode ? 0.0 : 1.0;
-    });
+        return this.isInSilentMode ? 0.0 : 1.0;
+    }
 }
 ```
 
@@ -140,33 +143,7 @@ Enough talk, let's get to the point: We want to model our counter using OOP - wi
 
 ```csharp
 
-public class FlipCounter
-{
-    private int currentCount;
-    private bool isInSilentMode;
 
-    public FlipCounter()
-    {
-        this.DesiredSampleLength = 10;
-    }
-
-    public int DesiredSampleLength { get; set; }
-
-    public double ProcessNextValue()
-    {
-        if (this.currentCount >= this.DesiredSampleLength)
-        {
-            this.currentCount = 0;
-            this.isInSilentMode = !this.isInSilentMode;
-        }
-        else
-        {
-            this.currentCount++;
-        }
-
-        return this.isInSilentMode ? 0.0 : 1.0;
-    }
-}
 ```
 
 That's a lot of code for a problem that can be expressed so easily.
@@ -178,3 +155,32 @@ TODO: Erklären, was passiert
     * WIr haben nur eine einzige Methode - gewissermaßen ein "Atom": An interface with 1 method can be represented by a function (interface is nominal, function is structural).
 
 
+
+<!-- 
+
+```csharp
+public static Func<double> FlipCounter(int desiredSampleLength)
+{
+    var initialState = new
+    {
+        count = 0,
+        isInSilentMode = false
+    };
+
+    var state = initialState;
+
+    return new Func<double>(() =>
+    {
+        state =
+            state.count >= desiredSampleLength
+            ? initialState
+            : new
+                {
+                    count = state.count + 1,
+                    isInSilentMode = state.isInSilentMode
+                };
+
+        return state.isInSilentMode ? 0.0 : 1.0;
+    });
+}
+``` -->

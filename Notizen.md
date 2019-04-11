@@ -56,3 +56,5 @@ Exkurs: What is state? State is made up of a bunch of things:
     A value that resides in that location
     The location can be accessed (read or written) from several other points
     Mutation is necessary (beause if not; copy would be suficcient)
+
+Nochmal rausarbeiten, warum Currying hilfreich ist (Currying as factory methods)
