@@ -7,13 +7,13 @@ The amplify and limit functions are so small that we won't break them into small
 
 Let's say we want to build some nice distortion effect that is defined in this way:
 
-[Blockschaltbild_A]
+[BS_A]
 
 ```fsharp
 let distort drive i =
     let amplified = amp drive i
-    let result = limit 1.0 amplified
-    result
+    let limited = limit 1.0 amplified
+    limited
 ```
 
 The "drive" parameter controls how much distortion we want: 0 means no distortion; 1 means: a lot of distortion. We achieve this by a feeding the input into our amplifier. The output of the amp is then fed into a limiter. Let's call this technique of somposition *serial composition*.
@@ -21,9 +21,9 @@ The "drive" parameter controls how much distortion we want: 0 means no distortio
 We use explicit identifier ("amplified", "result") and evaluate our amp and limit functions. This can be a useful technique e.g. when we want to re-use the "amplified" value in a more complex scenario (which we will see shortly). For serial composition, there are alternatives that we can use to make our code more "compact":
 
 ```fsharp
-let distort1 drive i = limit 1.0 (amp drive i)
+let distort1 drive input = limit 1.0 (amp drive input)
 
-let distort2 drive i = amp drive i |> limit 1.0
+let distort2 drive input = amp drive input |> limit 1.0
 
 let distort3 drive = amp drive >> limit 1.0
 ```
@@ -43,11 +43,12 @@ Remember the previous chapter, it was remarked that currying was very important.
 
 So, curryin can also be seen as a way of providing "factories for other functions". And it is important that we design our "factory functions" in a way that all parameters come first, then followed by the input value to have a float->float function at the end. When things get more complex in the following section, the technique of factory functions will help us a lot.
 
-3) Erklären; Blockschaltbild. This is nice, because it is just a "Bauanleitung" for a signal flow. Which means: We don't have to care about evaluating things. And we do not have to specify an "i" (input) explicitly; this "ergibt sich" from the composition itself.
+3)
+Erklären; Blockschaltbild. This is nice, because it is just a "Bauanleitung" for a signal flow. Which means: We don't have to care about evaluating things. And we do not have to specify an "i" (input) explicitly; this "ergibt sich" from the composition itself.
 
 [TODO: Depending on the character of the circuit, we will use a mix of all 4 forms.]
 
-### Parallel Composition (TODO: Stimmt das?)
+### Parallel Composition (Branch and Merge)
 
 TODO: Parallel doesn't (necessarily) mean parallel execution. This can be, but doesn't have to be.
 
@@ -55,51 +56,68 @@ Now that we understand what serial composition is, we know that it is useful to 
 
 Let's extend our sample in a way where the techniques of serial composition is not sufficient.
 
-The distortion effect we just engineered sounds nice, and we want to be able to "blend it in" together with a high-pass filtered version of the original signal. This high-pass signal shall be used for distortion, too. Visualizing this in a block diagram is easy [TODO: inhaltlich nicht korrekt (siehe Codebeispiel); viel mehr erklären]:
+The distortion effect we just engineered sounds nice, and we want to be able to "blend it in" together with a low-pass filtered version of the original signal. This low-pass signal shall be used for distortion, too. Visualizing this in a block diagram is easy [TODO: inhaltlich nicht korrekt (siehe Codebeispiel); viel mehr erklären]:
 
 [BS_B]
 
-Note that for now, we don't have a high pass filter, so we just use a placeholder function that works like a normal stateless processing function of type float->float:
+Some things to note:
+
+* The output value of "amp" is used in 2 following branches.
+* The output values of the 2 branches are then aggregated by the "mix" block.
+
+Now we will look at a technique how we can map this behavior to F# code.
+
+Think about what "branching" means: "Use an evaluated value in more than 1 place in the rest of a computation".
+
+As usual, there are a lot of ways to achieve this, and I recommend taking some time and thinking about how this could be done. In our sample, we will use a very simple recipe: Each time we need branching, we bind an evaluated value to an identifier:
 
 ```fsharp
-let highPass frq i : float = i // just a dummy for now...
+let blendedDistortion drive blend input =
+    let amped = input |> amp drive
+    mix 0.5
+        (amped |> limit 0.7)      // First branch: hardLimited
+        (amped |> lowPass 8000.0) // Second Branch: softLimited
+    |> mix blend amped
 ```
 
-As we can see, we need a "mix" function that has a "blend" parameter to control the amount of original and processed signal in the final output. 0 means: only original signal; 1 means: only processed signal.
+By introducing the "amped" identifier, we are able to use it's value in more than one place in the rest of our computation. Merging is nothing more that feeding evaluated branches into an appropriate function. Note that in the code above, there comes the "mix 0.5" first, then the 2 branches. This is reversed to what is done in the block diagram. In appendix, there are alternatives that let the "mix 0.5" appear after the branches. TODO: See appendix (||> bzw. ^>)
+
+#### A note on "lowPass":
+
+Note that for now, we don't have a low pass filter, so we just use a placeholder function that works like a normal stateless processing function of type float->float:
+
+```fsharp
+let lowPass frq input : float = input // just a dummy - for now...
+```
+
+#### A note on "mix":
+
+As we can see, we need a "mix" function that has a "abRatio" parameter to control the amount of original and processed signal in the final output. 0 means: only signal a; 1 means: only signal b.
 
 The function is this:
 
 ```fsharp
-let mix amount original processed : float = processed * amount + original * (1.0 - amount)
+let mix abRatio a b : float = a * abRatio + b * (1.0 - abRatio)
 ```
-(again test it with:
-mix 0.0 0.3 0.8 = 0.3
-mix 0.5 0.3 0.8 = 0.55
-mix 1.0 0.3 0.8 = 0.8
-)
 
-As we see, the function is not float-> float anymore after all parameters have been applied; it is float->float->float. This is understandable because it needs 2 inputs instead of one. As a consequence, we cannot use "mix" as a processor for our audio runtime. But we can use it inside of a processor as an element in our computation: 
+again test it with:
 
 ```fsharp
-let blendedDistortion drive blend i =
-    let hpFiltered = highPass 8000.0 i
-    let amped = hpFiltered |> amp drive
-    mix 0.5
-        (amped |> limit 0.5) // hardLimited
-        (amped |> limit 1.0) // softLimited
-    |> mix blend hpFiltered
+mix 0.0 0.3 0.8 = 0.3  // true
+mix 0.5 0.3 0.8 = 0.55 // true
+mix 1.0 0.3 0.8 = 0.8  // true
 ```
-
-Here, we have introduced 2 identifiers: hpFiltered and amped. By doing so, we are able to use the same values in more than one place in the rest of our computation. Since we are dealing with actual values, composing our functions in the way we did with >> operator doesn't work here; but that's not a problem: We achieved a readable, non-redundant way of describing a signal flow without any boilerplate code.
+<!-- 
+As we see, the function is not float->float anymore after all parameters have been applied; it is float->float->float. This is understandable because it needs 2 inputs instead of one. As a consequence, we cannot use "mix" as a processor for our audio runtime. But we can use it inside of a processor as an element in our computation:  -->
 
 *** Festhalten:
-Our rule is: Each time we branch a signal, we give it a name (there are alternative ways of branching that don't need identifiers (TODO: arrows)).
+Our rule is: Each time we branch a signal, we give it a name (there are alternative ways of branching that don't need identifiers (TODO: Alternative: arrows)).
 ***
 
 #### A note on the signature of "blendedDistortion"
 TODO: It's again float -> float. This is important because we can pass this function to our "audio runtime".
 
-
+<!-- 
 ### Alternative notation
 
 Since we will later deal with blocks that have access to global and local "state", let's have a look at another way of writing the "blendedDistortion" computation function. This might look unuseful for now, but having that technique in mind, we will be able to understand it's value later and build other helpful techniques upon it.
@@ -177,3 +195,4 @@ Benefit of having "bind":
     * Aspects usually are "mixed" in the code; here, we can separate them in different "layers". TODO: Layer-Bild
 
 Benefit: Wir bekommen mehrere Dinge unter unsere Kontrolle: Evaluierung und ... and with this in mind, we can make one step further.
+-->

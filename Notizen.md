@@ -58,3 +58,12 @@ Exkurs: What is state? State is made up of a bunch of things:
     Mutation is necessary (beause if not; copy would be suficcient)
 
 Nochmal rausarbeiten, warum Currying hilfreich ist (Currying as factory methods)
+    Ein Block mit 2 Inputs zeichnen; das ist eine curried function (von unten nach oben)
+
+Einleitung: We are interested in a comprehensive way of expressing signal flows.
+
+Nesting loops
+
+* i -> input
+* Alle Codebeispiele auf Korrektheit prüfen
+* 

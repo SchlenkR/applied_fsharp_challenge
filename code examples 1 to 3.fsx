@@ -50,7 +50,7 @@ let distort3 drive = amp drive >> limit 1.0
 
 
 
-let highPass frq i : float = i // just a dummy for now...
+let lowPass frq i : float = i // just a dummy for now...
 
 
 let mix amount a b : float = b * amount + a * (1.0 - amount)
@@ -68,7 +68,7 @@ mix 1.0 0.3 0.8 = 0.8
 //     let distorted = amp drive hpFiltered |> limit 1.0
 //     mix blend hpFiltered distorted
 let blendedDistortion drive blend i =
-    let hpFiltered = highPass 8000.0 i
+    let hpFiltered = lowPass 8000.0 i
     let amped = hpFiltered |> amp drive
     mix 0.5
         (amped |> limit 0.5) // hardLimited
@@ -77,11 +77,47 @@ let blendedDistortion drive blend i =
 
 
 
+let blendedDistortion drive blend input =
+    let amped = input |> amp drive
+    mix 0.5
+        (amped |> limit 0.7)      // a: First branch: hardLimited
+        (amped |> lowPass 8000.0) // b: Second Branch: softLimited
+    |> mix blend amped
 
+// Alt. 1
+let blendedDistortion drive blend input =
+    let amped = input |> amp drive
+    (
+        amped |> limit 0.7,     // a: First branch: hardLimited
+        amped |> lowPass 8000.0 // b: Second Branch: softLimited
+    )
+    ||> mix 0.5
+    |> mix blend amped
+
+// ALt. 2: right-to-left pipe forward operator
+// Non idiomativ F#
+let inline ( ^|> ) x f = f x 
+let blendedDistortion drive blend input =
+    let amped = input |> amp drive
+    (
+        // reversed application: b first, then a
+        (amped |> lowPass 8000.0) // b: Second Branch: softLimited
+        ^|> (amped |> limit 0.7)   // a: First branch: hardLimited
+        ^|> mix 0.5
+    )
+    |> mix blend amped
+
+let mix4 a b c d = printfn "%A %A %A %A" a b c d
+
+1.0
+^|> 2.0
+^|> 3.0
+^|> 4.0
+^|> mix4
 
 let bind value rest = rest value
 let blendedDistortion drive blend i =
-    bind (highPass 8000.0 i) (fun hpFiltered ->
+    bind (lowPass 8000.0 i) (fun hpFiltered ->
         bind (hpFiltered |> amp drive) (fun amped ->
             mix 0.5
                 (amped |> limit 0.5) // hardLimited
@@ -90,7 +126,7 @@ let blendedDistortion drive blend i =
         )
     )
 let blendedDistortion drive blend i =
-    bind (highPass 8000.0 i) (fun hpFiltered ->
+    bind (lowPass 8000.0 i) (fun hpFiltered ->
     bind (hpFiltered |> amp drive) (fun amped ->
     mix 0.5
         (amped |> limit 0.5) // hardLimited
@@ -101,7 +137,7 @@ let blendedDistortion drive blend i =
 
 let (>=>) = bind
 let blendedDistortion drive blend i =
-    highPass 8000.0 i >=> fun hpFiltered ->
+    lowPass 8000.0 i >=> fun hpFiltered ->
     hpFiltered |> amp drive >=> fun amped ->
     mix 0.5
         (amped |> limit 0.5) // hardLimited
@@ -109,7 +145,7 @@ let blendedDistortion drive blend i =
     |> mix blend hpFiltered
 
 let blendedDistortion drive blend i =
-    highPass 8000.0 i >=> fun hpFiltered ->
+    lowPass 8000.0 i >=> fun hpFiltered ->
     hpFiltered |> amp drive >=> fun amped ->
     mix 0.5
         (amped |> limit 0.5) // hardLimited
