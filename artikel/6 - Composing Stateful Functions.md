@@ -98,6 +98,8 @@ Since this article is all about synthesizers - let's synthesize our composition 
 
 ### Using Blocks
 
+// TODO: Teile davon in den Anhang schieben?
+
 For sure you remember our "blendedDistortion" function from the previous chapters. Here it is, with some modifications:
 
 * I introduced more identifiers - just for better readability!
@@ -127,71 +129,14 @@ So we have to
 
 Let's do it! 
 
-```fsharp
-let blendedDistortion drive input =
-    let amped = input |> amp drive
-    bind (lowPass 0.1 amped) (fun ampedAndLowPassed ->
-        let limited = amped |> limit 0.7
-        bind (lowPass 0.2 limited) (fun limitedAndLowPassed ->
-            let mixed = mix 0.5 limitedAndLowPassed ampedAndLowPassed
-            mixed))
-```
+**Note**
+If you are already familiar with monads and/or F# computation expressions, you can skip this chapter. Otherwise, keep reading. A very good alternative source that explains monadic (and other ways of) composition can be found [here].
 
-That doesn't look like the desired result (and it wouldn't compile - but let's keep that aside for a moment)! But with a little bit of tweaking indentation, we can make it look a little more readable:
+**Note**
+Our modified "blendedDistortion" sample is used to:
 
-```fsharp
-let blendedDistortion drive input =
-    let amped = input |> amp drive
-    bind (lowPass 0.1 amped) (fun ampedAndLowPassed ->
-    let limited = amped |> limit 0.7
-    bind (lowPass 0.2 limited) (fun limitedAndLowPassed ->
-    let mixed = mix 0.5 limitedAndLowPassed ampedAndLowPassed
-    mixed))
-```
+* explain how "bind" is finally used;
+* understand in which way it relates to stateless computations;
+* see how we can simplify the syntax by using F#'s computation expressions.
 
-Better! Now compare this code with the desired code from above: Every time we use a lowPass, there's not let binding anymore, but a bind, that takes exactly the expression on the right side of the let binding. The second parameter of bind is then the "rest of the computation", coded as a lambda function, that has a parameter with the identifier name of the let binding. Hard to read - but look at this picture:
-
-[// TODO: Bild so wie in der Vortragspräsi]
-
-We can introduce a prefix style operator as an alias for bind:
-
-```fsharp
-let (>>=) = bind
-```
-
-...and remove the parenthesis:
-
-```fsharp
-let blendedDistortion drive input =
-    let amped = input |> amp drive
-    lowPass 0.1 amped >>= fun ampedAndLowPassed ->
-    let limited = amped |> limit 0.7
-    lowPass 0.2 limited >>= fun limitedAndLowPassed ->
-    let mixed = mix 0.5 limitedAndLowPassed ampedAndLowPassed
-    mixed
-```
-
-Now we are pretty close to the desired code, except that the identifiers of the lambdas are coming after the expression, but we will get rid of that, too in a minute.
-
-There is one thing here: The code wouldn't compile. Remember that we defined bind in a way that it get's passed the "rest of the computation" as a function that evaluates to a Block? Look at the last lambda function: It evaluates to a float, not to a Block! But why? The answer is easy: It has no state, because the "mix" function is a stateless function, thus it evaluates to a float value and not to a BlockOutput. Solving this is easy, because we can turn a float value into a ```fsharp BlockOutput<unit>``` like this:
-
-```fsharp
-// "Return" function
-let ret x = { value = x; state = () }
-```
-
-The whole blendedDistortion function then looks like this:
-
-```fsharp
-let blendedDistortion drive input =
-    let amped = input |> amp drive
-    lowPass 0.1 amped >>= fun ampedAndLowPassed ->
-    let limited = amped |> limit 0.7
-    lowPass 0.2 limited >>= fun limitedAndLowPassed ->
-    let mixed = mix 0.5 limitedAndLowPassed ampedAndLowPassed
-    ret mixed
-```
-
-### Using F# bind / ret language support
-
-The syntax with our lambdas is close to the desired syntax, but we can get even closer. Luckily, what we did is so generic that F# (and a lot of other languages) has support for this kind of composition.
+Later (in chapter TODO), we will build up another, more comprehensible example with a focus on user's perspective, rather than on the aspects of composition itself.

@@ -32,6 +32,13 @@ let bind (thatBlock: Block<'stateA>) (rest: float -> Block<'stateB>) : Block<'st
     // Construct a named "Block" function.
     Block blockFunction
 
+let (>>=) = bind
+
+let ret x =
+    let blockFunction unusedState =
+        { value = x; state = () }
+    Block blockFunction
+
 
 let amp factor i : float = i * factor
 
@@ -49,6 +56,7 @@ let lowPass timeConstant input =
         let newState = out
         { value = out; state = newState }
     Block blockFunction
+
 
 let blendedDistortion drive input =
     let amped = input |> amp drive
@@ -74,8 +82,6 @@ let blendedDistortion drive input =
     let mixed = mix 0.5 limitedAndLowPassed ampedAndLowPassed
     mixed))
 
-let (>>=) = bind
-
 let blendedDistortion drive input =
     let amped = input |> amp drive
     lowPass 0.1 amped >>= fun ampedAndLowPassed ->
@@ -84,4 +90,24 @@ let blendedDistortion drive input =
     let mixed = mix 0.5 limitedAndLowPassed ampedAndLowPassed
     mixed
 
-let ret x = { value = x; state = () }
+let blendedDistortion drive input =
+    let amped = input |> amp drive
+    lowPass 0.1 amped >>= fun ampedAndLowPassed ->
+    let limited = amped |> limit 0.7
+    lowPass 0.2 limited >>= fun limitedAndLowPassed ->
+    let mixed = mix 0.5 limitedAndLowPassed ampedAndLowPassed
+    ret mixed
+
+type Patch() =
+    member this.Bind(block, rest) = bind block rest
+    member this.Return(x) = ret x
+let patch = Patch()
+
+let blendedDistortion drive input = patch {
+    let amped = input |> amp drive
+    let! ampedAndLowPassed = lowPass 0.1 amped
+    let limited = amped |> limit 0.7
+    let! limitedAndLowPassed = lowPass 0.2 limited
+    let mixed = mix 0.5 limitedAndLowPassed ampedAndLowPassed
+    return mixed
+}
