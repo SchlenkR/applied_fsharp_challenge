@@ -62,8 +62,47 @@ Nochmal rausarbeiten, warum Currying hilfreich ist (Currying as factory methods)
 
 Einleitung: We are interested in a comprehensive way of expressing signal flows.
 
-Nesting loops
+Vorwissen: Woher bekommt man das?
+    Oder kurz in den Anhang nehmen, was interessant ist.
+    Writing functions
+    Types
+    Applying functions
+    Currying
+    FSI / VS Code / Ionide
+    >> |> and custom operators
+    kein return -> dafür let..in expressions
+
+
+Nesting patches
 
 * i -> input
 * Alle Codebeispiele auf Korrektheit prüfen
-* 
+* patch -> coputation
+
+* Identify a stateful thing not by reference, but by a given datastructure + a relative position.
+* Zuerst nochmal Blockdiagram anschauen
+* Rückkopplung kann gesehen werden als Value+State -> Value+State
+* Strategie ist: "Pick up and Delivery"
+* Das Ziel nochmal in Code beschreiben:
+    * Nochmal das Beispiel mit einer puren Funktion anschauen
+    * Das geht aber so nicht; State fehlt.
+
+Am Ende:
+* Wir haben hier float als Value; könnten wir aber generalisieren.
+
+Type signatures:
+    We make things inline to leave out signatures:
+
+Signature in den Codebeispielen reinnehmen
+
+Vorwort: Etwas über FluX erzählen
+
+last -> previous (state)
+
+Reader State (env)
+
+Result -> Output
+
+TODOs
+
+BlendedDistortion - das existiert in so vielen Versionen - welches gilt denn nun?

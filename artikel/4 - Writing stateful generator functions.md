@@ -52,15 +52,15 @@ Let's see how we can implement it in a block diagram:
 
 [lpf_inside.tif]
 
-One interesting thing to notice: There is no state explicitly in a way that we store or memorize values. Instead, the state is modeled as the output value delayed by 1 sample ("t-1" block), which is then fed back into the next evaluation of the whole function. **This is a key point!** because we can model any kind of local state like this - no matter how they are structured or calculated. A abstract "block with state" can then be modeled like this:
+One interesting thing to notice: There is no state explicitly in a way that we store or memorize values. Instead, the state is modeled as the output value delayed by 1 sample ("t-1" block), which is then fed back into the next evaluation of the whole function. **This is a key point** because we can model any kind of local state in that way - no matter how they are structured or calculated. A abstract "block with state" can then be modeled like this:
 
-[block_with_state.tif]
+[block_with_state_and_params.tif]
 
 Beside the output value, there is an output state. And beside the input value, there comes an input state that is the output state from the last evaluation (plus curried function parameters - as usual).
 
 In the following chapters, we will have a look on ways of composing such functions, and we will understand that these ways provide less or more compfort for the user who wants to express signal computations.
 
-We start with the imperative way.
+We start with an object oriented programming approach.
 
 <!-- 
 

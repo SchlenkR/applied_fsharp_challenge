@@ -72,12 +72,11 @@ Think about what "branching" means: "Use an evaluated value in more than 1 place
 As usual, there are a lot of ways to achieve this, and I recommend taking some time and thinking about how this could be done. In our sample, we will use a very simple recipe: Each time we need branching, we bind an evaluated value to an identifier:
 
 ```fsharp
-let blendedDistortion drive blend input =
+let blendedDistortion drive input =
     let amped = input |> amp drive
     mix 0.5
         (amped |> limit 0.7)      // First branch: hardLimited
         (amped |> lowPass 8000.0) // Second Branch: softLimited
-    |> mix blend amped
 ```
 
 By introducing the "amped" identifier, we are able to use it's value in more than one place in the rest of our computation. Merging is nothing more that feeding evaluated branches into an appropriate function. Note that in the code above, there comes the "mix 0.5" first, then the 2 branches. This is reversed to what is done in the block diagram. In appendix, there are alternatives that let the "mix 0.5" appear after the branches. TODO: See appendix (||> bzw. ^>)

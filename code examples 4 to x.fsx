@@ -1,3 +1,0 @@
-
-fsi.FloatingPointFormat <- "g2"
-

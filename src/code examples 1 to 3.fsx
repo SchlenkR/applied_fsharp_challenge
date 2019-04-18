@@ -68,12 +68,12 @@ mix 1.0 0.3 0.8 = 0.8
 //     let distorted = amp drive hpFiltered |> limit 1.0
 //     mix blend hpFiltered distorted
 let blendedDistortion drive blend i =
-    let hpFiltered = lowPass 8000.0 i
-    let amped = hpFiltered |> amp drive
+    let lpFiltered = lowPass 8000.0 i
+    let amped = lpFiltered |> amp drive
     mix 0.5
         (amped |> limit 0.5) // hardLimited
         (amped |> limit 1.0) // softLimited
-    |> mix blend hpFiltered
+    |> mix blend lpFiltered
 
 
 
