@@ -40,7 +40,8 @@ let amp amount input : float = input * amount
 TODO: Blockschaltbild machen
 
 --- 
-* We only write the "returning" type (float). The types of amount and i are infered. Can also write it with explicit types for all input params: 
+We only write the "returning" type (float). The types of amount and i are infered. Can also write it with explicit types for all input params:
+
 ```fsharp
 let amp (amount: float) (input: float) : float = input * amount
 ```
