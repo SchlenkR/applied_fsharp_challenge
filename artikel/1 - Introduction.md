@@ -4,7 +4,9 @@
 ## Einleitung und Motivation
 
 Making music with the help of computers is not a new approach. It started with music N (TODO: Nochmal ausbauen)...
-In the analog world, physical quantities like the electric currency are used to represent a signal that is finally sent to a speaker. Thes quantities are created and altered by low-level components like condensors, resistors, magnetic coils, transistors, diods, etc. which are connected to each others in circuits. They are composed to larger components like operational amplifiers, that are again used to build modules like filters and oscillators which synthesizers and effect processors are made of. Digital audio signal processing (Audio-DSP) is about modeling these components on different levels of abstraction, resulting in the simulation of circuits similar to their analog counterparts (of course, there is no limit in creating completely new forms of synthesizers and effects). If you are already familiar with languages like Java or C#, you might think that DSP fits perfectly in the world of object-oriented programming languages: With it's basic idea of encapsulating mutable state by behavior (methods) and giving it an addressable identity (instance pointer), it maps directly to the concept of having physical entities (like condensors or transistors) that "exist" and hold their's own state that changes over time. This article is about an alternative approach of audio-DSP which is solely based on the paradigm of pure functions using a language called F#. TODO: Benefits
+In the analog world, physical quantities like the electric currency are used to represent a signal that is finally sent to a speaker. Thes quantities are created and altered by low-level components like condensors, resistors, magnetic coils, transistors, diods, etc. which are connected to each others in circuits. They are composed to larger components like operational amplifiers, that are again used to build modules like filters and oscillators which synthesizers and effect processors are made of. Digital audio signal processing (Audio-DSP) is about modeling these components on different levels of abstraction, resulting in the simulation of circuits similar to their analog counterparts (of course, there is no limit in creating completely new forms of synthesizers and effects).
+
+If you are already familiar with languages like Java or C#, you might think that DSP fits perfectly in the world of object-oriented programming languages: With it's basic idea of encapsulating mutable state by behavior (methods) and giving it an addressable identity (instance pointer), it maps directly to the concept of having physical entities (like condensors or transistors) that "exist" and hold their's own state that changes over time. This article is about an alternative approach of audio-DSP which is solely based on the paradigm of pure functions using a language called F#. TODO: Benefits
 
 (******
 We will learn that object-oriented concept like instances (and therfore instanciation) as well as aspects of method evaluation can be left out completely, leading to a way of describing signal flows and circuits purely focussing on how values flow through the system.
@@ -26,6 +28,7 @@ Bedingungen:
 
 
 ## Abgrenzung
+
 * Audio signals (means: at the end, we are interested in a sequence of float values)
 * Time domain only
 * Performance: Not considered here.
@@ -45,7 +48,9 @@ As we can see, we have captured a sine wave with the *amplitude* of 0.5 (see her
 Given the information that we have a sample rate of 16Hz, we can simplify our time-value sequence to just a value sequence:
 [ 0.0; 0.3; ...]
 
-The point-in-time of the the n-th value in the sequence can easily be calculated when sample rate and starting time are given. This fact is fundamental, and leads to a definition of what *processing* means: **Processing signal is creating or changing sequence of values**.
+The point-in-time of the the n-th value in the sequence can easily be calculated when sample rate and starting time are given. This fact is fundamental, and leads to a definition of what *processing* means:
+
+<statement>Processing signal is creating or changing sequence of values.</statement>
 
 ### Constraints:
 

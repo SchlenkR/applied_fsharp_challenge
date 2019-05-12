@@ -3,6 +3,10 @@
 
 ### What we have learned so far
 
+<hint>
+sdfsdfd
+</hint>
+
 TODO
 * Was Signale sind
 
@@ -11,6 +15,7 @@ TODO
     Then: Apply these functions to every single value of a sequence.
 ]
 
+TODO: Hier muss erklärt werden, was wir erreichen wollen. Also das Beispiel direkt mit Blockschaltbild usw. erklären, da man sonst nicht weiß, was das alles soll.
 
 [TODO: Kurzes Vorwort, was uns hier erwartet.] Please note that currently, we are not interested in the way 
 

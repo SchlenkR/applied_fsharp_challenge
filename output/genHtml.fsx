@@ -42,3 +42,4 @@ Directory.GetFiles(sourceDir, "*.tif")
 |> Seq.iter (fun f -> f.CopyTo (outputDir + "\\" + f.Name) |> ignore)
 
 File.Delete mergedFileName
+
