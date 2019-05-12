@@ -6,6 +6,8 @@ fsi.FloatingPointFormat <- "g2"
 open System
 open FSharp.Charting
 
+{| x = 40 |}
+
 ///////
 
 let pi = Math.PI

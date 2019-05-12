@@ -68,7 +68,7 @@ let blendedDistortion drive input =
     ret mixed
 ```
 
-### Using F# bind / ret language support
+### Using F# language support for bind and return
 
 The syntax with our lambdas is close to the desired syntax, but we can get even closer. Luckily, what we did is so generic that F# (and a lot of other languages) has support for this kind of composition.
 

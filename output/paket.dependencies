@@ -1,0 +1,10 @@
+framework: net45
+source https://www.nuget.org/api/v2
+
+nuget FSharp.Formatting
+nuget FSharp.Formatting.CommandTool
+
+nuget CommonMark.NET
+
+nuget Markdig
+nuget Markdig.SyntaxHighlighting 

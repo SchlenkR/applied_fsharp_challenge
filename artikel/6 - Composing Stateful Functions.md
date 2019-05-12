@@ -1,13 +1,11 @@
 
 ## Composing Stateful Functions
 
-Let's look another time at the block diagram of our stateful los pass filter, after all curried parameters have been applied:
-
 [block_with_state.tif]
 
 The feedback of state is the key point: How can that be achieved? To find an answer, let's just ignore it for a moment. We assume that there will be something that can handle this issue for us. What remains is a function with "state in" and "state out" beside the actual in and out values:
 
-![](block_with_state_no_feedback.tif)
+![block_with_state_no_feedback](./block_with_state_no_feedback.tif)
 
 Assuming that something passes in previous state and records output state, we can rewrite the object oriented low pass filter code from (TODO: Chapter 4) by transforming it to a pure function:
 
@@ -119,9 +117,9 @@ Here, we treated lowPass as a pure function - which is what we wanted - but whic
 
 Now that we have introduced Blocks and the "Pick Up and Delivery" strategy (implemented by the 'bind' combinator function), let's see how far we come.
 
-We defined that bind takes a Block and a "rest of the whole computation". Since in a functional language, "rest of computation" is a function, we defined it as ``` float -> Block<'state>```.
+We defined that bind takes a Block and the "rest of the computation". Since in a functional language, "rest of computation" is a function, we defined it as ``` float -> Block<'state>```.
 
-So we have to
+In order to be able to do so, we have to
     * "break up" the code sample from above into pieces of "rest functions",
     * in the desired form,
     * and do that every time a value from a Block is needed,
