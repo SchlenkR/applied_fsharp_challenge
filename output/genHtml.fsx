@@ -19,8 +19,8 @@ let projInfo =
     "github-link", "https://github.com/TODO"
     "project-name", "TODO" ]
 
-if Directory.Exists outputDir then Directory.Delete (outputDir, true)
-Directory.CreateDirectory outputDir
+Directory.GetFiles (outputDir, "*.*")
+|> Seq.iter File.Delete
 
 Directory.GetFiles(sourceDir, "*.md")
 |> Seq.filter (fun x -> Char.IsNumber (Path.GetFileName x).[0])
@@ -29,7 +29,13 @@ Directory.GetFiles(sourceDir, "*.md")
 |> fun content -> File.WriteAllText (mergedFileName, content)
 
 RazorLiterate.ProcessMarkdown
-    ( mergedFileName, projTemplate, outputFileName)
+    ( mergedFileName,
+      templateFile = projTemplate,
+      output = outputFileName,
+      format = OutputKind.Html,
+      lineNumbers = false,
+      replacements = projInfo,
+      includeSource = true)
 
 Directory.GetFiles(sourceDir, "*.tif")
 |> Seq.map FileInfo
