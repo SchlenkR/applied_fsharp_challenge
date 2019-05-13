@@ -190,4 +190,8 @@ Zum Schluss: Reduce benutzen als Runtime
 
 
 * Erklären: Block wird generalisiert; ist also kein float mehr
+* geschachtelte Patches
+* patch -> block (der CE builder)
+* Producing sound
+* Die Parameterwerte bei blendedDistortion stimmen teils nicht (8000.0 etc.)
 * 
