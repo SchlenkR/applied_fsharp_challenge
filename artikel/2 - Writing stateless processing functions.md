@@ -3,10 +3,6 @@
 
 ### What we have learned so far
 
-<hint>
-sdfsdfd
-</hint>
-
 TODO
 * Was Signale sind
 

@@ -45,13 +45,13 @@ let blendedDistortion drive input =
     mixed
 ```
 
-Now we are pretty close to the desired code, except that the identifiers of the lambdas are coming after the expression, but we will get rid of that, too in a minute.
+Now we are pretty close to the desired code, except that the identifiers of the lambdas are coming after the expression, but we will get rid of that, too, in a minute.
 
-There is one thing here: The code wouldn't compile. Remember that we defined bind in a way that it get's passed the "rest of the computation" as a function that evaluates to a Block? Look at the last lambda function: It evaluates to a float, not to a Block! But why? The answer is easy: It has no state, because the "mix" function is a stateless function, thus it evaluates to a float value and not to a Block. Solving this is easy, because we can turn a float value into a ```fsharp Block<unit>``` like this:
+There is one thing to notice here: The code wouldn't compile. Remember that we defined bind in a way that it get's passed the "rest of the computation" as a function that evaluates to a Block? Look at the last lambda function: It evaluates to a float, not to a Block! But why? The answer is easy: It has no state, because the "mix" function is a stateless function, thus it evaluates to a pure float value and not to a Block. Solving this is easy, because we can turn a float value into a ```fsharp Block<unit>``` like this:
 
 ```fsharp
 // "Return" function
-let ret x =
+let returnB x =
     let blockFunction unusedState = { value = x; state = () }
     Block blockFunction
 ```
@@ -65,7 +65,7 @@ let blendedDistortion drive input =
     let limited = amped |> limit 0.7
     lowPass 0.2 limited >>= fun limitedAndLowPassed ->
     let mixed = mix 0.5 limitedAndLowPassed ampedAndLowPassed
-    ret mixed
+    returnB mixed
 ```
 
 ### Using F# language support for bind and return
@@ -77,7 +77,7 @@ TODO: Ausformulieren; ggf. in den Anhang
 ```fsharp
 type Patch() =
     member this.Bind(block, rest) = bind block rest
-    member this.Return(x) = ret x
+    member this.Return(x) = returnB x
 let patch = Patch()
 ```
 

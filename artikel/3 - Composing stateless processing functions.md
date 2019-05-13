@@ -7,7 +7,7 @@ The amplify and limit functions are so small that we won't break them into small
 
 Let's say we want to build some nice distortion effect that is defined in this way:
 
-[BS_A]
+![Block diagram A](./Folie1.tif)
 
 ```fsharp
 let distort drive i =
@@ -58,7 +58,7 @@ Let's extend our sample in a way where the techniques of serial composition is n
 
 The distortion effect we just engineered sounds nice, and we want to be able to "blend it in" together with a low-pass filtered version of the original signal. This low-pass signal shall be used for distortion, too. Visualizing this in a block diagram is easy [TODO: inhaltlich nicht korrekt (siehe Codebeispiel); viel mehr erklären]:
 
-[BS_B]
+![Block diagram B](./Folie3.tif)
 
 Some things to note:
 
@@ -109,9 +109,9 @@ mix 1.0 0.3 0.8 = 0.8  // true
 <!-- 
 As we see, the function is not float->float anymore after all parameters have been applied; it is float->float->float. This is understandable because it needs 2 inputs instead of one. As a consequence, we cannot use "mix" as a processor for our audio runtime. But we can use it inside of a processor as an element in our computation:  -->
 
-*** Festhalten:
+<statement>
 Our rule is: Each time we branch a signal, we give it a name (there are alternative ways of branching that don't need identifiers (TODO: Alternative: arrows)).
-***
+</statement>
 
 #### A note on the signature of "blendedDistortion"
 TODO: It's again float -> float. This is important because we can pass this function to our "audio runtime".

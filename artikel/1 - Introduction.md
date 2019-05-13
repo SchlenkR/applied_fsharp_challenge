@@ -3,7 +3,8 @@
 
 ## Einleitung und Motivation
 
-Making music with the help of computers is not a new approach. It started with music N (TODO: Nochmal ausbauen)...
+Making music with the help of computers is not a new approach. It started with music N (TODO: Nochmal ausbauen)... and one ask might the question: Why do we need yet another language?
+
 In the analog world, physical quantities like the electric currency are used to represent a signal that is finally sent to a speaker. Thes quantities are created and altered by low-level components like condensors, resistors, magnetic coils, transistors, diods, etc. which are connected to each others in circuits. They are composed to larger components like operational amplifiers, that are again used to build modules like filters and oscillators which synthesizers and effect processors are made of. Digital audio signal processing (Audio-DSP) is about modeling these components on different levels of abstraction, resulting in the simulation of circuits similar to their analog counterparts (of course, there is no limit in creating completely new forms of synthesizers and effects).
 
 If you are already familiar with languages like Java or C#, you might think that DSP fits perfectly in the world of object-oriented programming languages: With it's basic idea of encapsulating mutable state by behavior (methods) and giving it an addressable identity (instance pointer), it maps directly to the concept of having physical entities (like condensors or transistors) that "exist" and hold their's own state that changes over time. This article is about an alternative approach of audio-DSP which is solely based on the paradigm of pure functions using a language called F#. TODO: Benefits
@@ -34,6 +35,9 @@ Bedingungen:
 * Performance: Not considered here.
 
 ## A Brief Definition of DSP
+
+TODO: Bild: Werte, Buffer, Souncard, Speaker
+TODO: Erklären: Audio Loop
 
 Digital signal processing - in contrast to analog signal processing - deals with quantized values over a discrete time. What does it mean: Take an analog synthesizer. It creates and outputs a signal based on electric currency - which is continuous from a physical point of view. A computer cannot process values in a continuous way - it has to *quantize* two things:
     * Time: This is called sampling, and happens for an audio signal usually at multiples of 44100 times per second (44.1 kHz). Why 44100? Look at TODO: Sample Theorem.
