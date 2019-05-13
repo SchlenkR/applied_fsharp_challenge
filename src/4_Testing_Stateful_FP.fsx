@@ -1,11 +1,9 @@
+#load "3_Stateful_FP.fsx"
 
-#I "./packages/FSharp.Charting"
-#load @"./packages/FSharp.Charting/FSharp.Charting.fsx"
+#r @".\packages\XPlot.Plotly\lib\net472\XPlot.Plotly.dll"
 
 open System
-open System.Drawing
-open FSharp.Charting
-
+open XPlot.Plotly
 
 module Data =
     
@@ -22,7 +20,7 @@ module Data =
         init 0.0 @ init 1.0
 
     let rect =
-        jump @ jump @ jump @ jump @ jump @ jump
+        jump @ jump @ jump @ jump
 
 
 let lowPassCtor() =
@@ -34,11 +32,17 @@ let lowPassCtor() =
 
 let lowPass = lowPassCtor()
 
-let input = Data.rect
-let output = input |> List.map (fun x -> lowPass 0.1 x)
-
-Chart.Combine [
-    Chart.Line input
-    Chart.Line output
+[
+    Scatter(
+        name = "Input (rect)",
+        y = Data.rect
+    )
+    Scatter(
+        name = "LP (Input)",
+        y = (Data.rect |> List.map (fun x -> lowPass 0.1 x))
+    )
 ]
-
+|> Chart.Plot
+|> Chart.WithWidth 1400
+|> Chart.WithHeight 900
+|> Chart.Show

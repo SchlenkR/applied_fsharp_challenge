@@ -40,7 +40,7 @@ let amp amount input : float = input * amount
 
 TODO: Blockschaltbild machen
 
---- 
+<excurs data-name="Currying">
 We only write the "returning" type (float). The types of amount and i are infered. Can also write it with explicit types for all input params:
 
 ```fsharp
@@ -56,14 +56,14 @@ let amp amount : float = (*) amount
 
 Currying is extremely important for us, and we will understand why when it comes to composing our functions.
 
-(*
 Again, we could leave out amount, having defined just an alias for the (*) function:
 ```fsharp
 let amp = (*)
 ```
 
-Let's use the other variants so that we have some meaningful names for our arguments (for multiplication, the order of arguments dowsn't matter, but there are a lot of other functions where precedence matters (TODO: wirklich precedence?)). SO let's stick with the first version.
-*)
+In the ongoing samples, we will use the first variant ```fsharp let amp amount input : float = input * amount ``` so that we have some meaningful names for our arguments (for multiplication, the order of arguments dowsn't matter, but there are a lot of other functions where precedence matters (TODO: wirklich precedence?)). SO let's stick with the first version.
+
+</excurs>
 
 TODO: Currying erklären mit Blockschaltbild und der Hintereinanderlegung der Parameter mit kleinen Kästen drumherum; Currying ist eine Art Factory für andere Funktionen.
 

@@ -35,7 +35,7 @@ let distort3 drive = amp drive >> limit 1.0
 2)
 ...the pipe operator. The pipe operator is explained [here; TODO: Exkurs] and dows basically this: It applies the function on the left side and uses it's result to feed it to the function on the right side. How can that work?
 
-[Bild: (float->float) |> (float->float)]
+[Bild: (float -> float) |> (float -> float)]
 
 Remember the previous chapter, it was remarked that currying was very important. Now we can see why: We said that we are interested in functions of form *float -> float*, and now it's clear why: It enables us to compose functions in always the same manner. But when we review our amp function (and also the limit function), we see that they are float -> float -> float. This is because they not only transform an input value to an output value; they also require an additional parameter to control their behavior.
 
@@ -64,6 +64,8 @@ Some things to note:
 
 * The output value of "amp" is used in 2 following branches.
 * The output values of the 2 branches are then aggregated by the "mix" block.
+* The output value can then be processed further by the "fadeIn" block.
+* And finally, we have an output gain to lower the signal's strength.
 
 Now we will look at a technique how we can map this behavior to F# code.
 
@@ -74,19 +76,28 @@ As usual, there are a lot of ways to achieve this, and I recommend taking some t
 ```fsharp
 let blendedDistortion drive input =
     let amped = input |> amp drive
-    mix 0.5
-        (amped |> limit 0.7)      // First branch: hardLimited
-        (amped |> lowPass 8000.0) // Second Branch: softLimited
+    let hardLimited = amped |> limit 0.7
+    let softLimited = amped |> lowPass 8000.0
+    let mixed = mix 0.5 hardLimited softLimited
+    let fadedIn = mixed |> fadeIn 0.1
+    let gained = amp 0.5 fadedIn
+    gained
 ```
 
 By introducing the "amped" identifier, we are able to use it's value in more than one place in the rest of our computation. Merging is nothing more that feeding evaluated branches into an appropriate function. Note that in the code above, there comes the "mix 0.5" first, then the 2 branches. This is reversed to what is done in the block diagram. In appendix, there are alternatives that let the "mix 0.5" appear after the branches. TODO: See appendix (||> bzw. ^>)
 
-#### A note on "lowPass":
+#### A note on "lowPass" and "fadeIn:
 
-Note that for now, we don't have a low pass filter, so we just use a placeholder function that works like a normal stateless processing function of type float->float:
+Note that for now, we don't have a low pass filter, so we just use a placeholder function that works like a normal stateless processing function of type `float -> float`:
 
 ```fsharp
 let lowPass frq input : float = input // just a dummy - for now...
+```
+
+The same is for fadeIn:
+
+```fsharp
+let fadeIn stepSize input : float = input // just a dummy - for now...
 ```
 
 #### A note on "mix":

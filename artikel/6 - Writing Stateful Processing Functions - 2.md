@@ -51,7 +51,19 @@ Let's name that function, too:
 type Block<'state> = 'state -> BlockOutput<'state>
 ```
 
-The ```Block``` type is just an alias for our stateful function, so that in the end, the lowPass code looks like this:
+#### Generalizing float
+
+Since we might have signal values not always of type float, we can easily generalize the float, so that our types look like this:
+
+```fsharp
+type BlockOutput<'value, 'state> = { value: 'value; state: 'state }
+
+type Block<'value, 'state> = 'state -> BlockOutput<'value, 'state>
+```
+
+#### Re-Writing lowPass and fadeIn
+
+Having these 2 types in mind, we can use the OOP code and refactor is to `Block` functions that have a `BlockOutput` by eliminating the mutable variables and passing them in/out of our functions:
 
 ```fsharp
 // float -> float -> Block<float>
@@ -63,9 +75,17 @@ let lowPass timeConstant input =
         { value = out; state = newState }
 ```
 
-Now the goal is to compose such functions. And we also know:
+Now we can eliminate the mutable variable for the "fadeIn" function, too:
 
-The composition must handle the "recording" of the output state and feeding it into the next evaluation's input, and this must be done for every block in the computation. This sounds like we just moved the key issue (instance management) into the composition layer. This is true - and beneficial - because we can "outsource" a recurring aspect of our programming model so that the user doesn't have to handle it anymore in a concrete way.
+```fsharp
+let fadeIn stepSize input =
+    fun lastValue ->
+        let result = input * lastValue
+        let newState = min (lastValue + stepSize) 1.0
+        { value = result; state = newState }
+```
+
+Now we need a way of composing those functions: The composition must handle the "recording" of the output state and feeding it into the next evaluation's input, and this must be done for every block in the computation. This sounds like we just moved the key issue (instance management) into the composition layer. This is true - and beneficial - because we can "outsource" a recurring aspect of our programming model so that the user doesn't have to handle it anymore in a concrete way.
 
 ### Pick up and Delivery
 
@@ -94,7 +114,11 @@ Let's call the overall strategy "Pick Up and Delivery", and it shall work like t
 Since this article is all about synthesizers - let's synthesize our composition function according to the recipe from above:
 
 ```fsharp
-let bind (currentBlock: Block<'stateA>) (rest: float -> Block<'stateB>) : Block<'stateA * 'stateB> =
+let bind
+        (currentBlock: Block<'valueA, 'stateA>)
+        (rest: 'valueA -> Block<'valueB, 'stateB>)
+        : Block<'valueB, 'stateA * 'stateB> =
+    
     fun previousStatePack ->
 
         // Deconstruct state pack:
@@ -140,21 +164,19 @@ Having this in mind, we can modify our use case example "blendedDistortion" in w
 
 Here it is in the desired form:
 
-// TODO: Das passt nicht zusammen.
-* I introduced more identifiers - just for better readability!
-* I introduced an additional processing step: The limited signal shall also be low pass filtered (so that we have 2 low pass filters involved):
-
 ```fsharp
+// that would be nice, but doesn't work.
 let blendedDistortion drive input =
     let amped = input |> amp drive
-    let ampedAndLowPassed = lowPass 0.1 amped
-    let limited = amped |> limit 0.7
-    let limitedAndLowPassed = lowPass 0.2 limited
-    let mixed = mix 0.5 limitedAndLowPassed ampedAndLowPassed
-    mixed
+    let hardLimited = amped |> limit 0.7
+    let softLimited = amped |> lowPass 8000.0   // we would like to use lowPass
+    let mixed = mix 0.5 hardLimited softLimited
+    let fadedIn = mixed |> fadeIn 0.1           // we would like to use fadeIn
+    let gained = amp 0.5 fadedIn
+    gained
 ```
 
-Here, we treated lowPass as a pure function - which is what we wanted - but which also didn't work. We then used OOP that solved the issue, but forced us to create and manage references to instances.
+Here, we treat lowPass and fadeIn as a pure function - which is what we wanted - but which also doesn't work. We then used OOP that solved the issue, but forced us to create and manage references to instances.
 
 Now that we have introduced Blocks and the "Pick Up and Delivery" strategy (implemented by the 'bind' combinator function), let's see how far we come.
 

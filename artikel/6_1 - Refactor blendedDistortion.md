@@ -2,28 +2,30 @@
 ## Rewrite blendedDistortion with "bind"
 
 ```fsharp
-let blendedDistortion drive input =
+let blendedDistortion1 drive input =
     let amped = input |> amp drive
-    bind (lowPass 0.1 amped) (fun ampedAndLowPassed ->
-        let limited = amped |> limit 0.7
-        bind (lowPass 0.2 limited) (fun limitedAndLowPassed ->
-            let mixed = mix 0.5 limitedAndLowPassed ampedAndLowPassed
-            mixed))
+    let hardLimited = amped |> limit 0.7
+    bind (amped |> lowPass 8000.0) (fun softLimited ->
+        let mixed = mix 0.5 hardLimited softLimited
+        bind (mixed |> fadeIn 0.1) (fun fadedIn ->
+            let gained = amp 0.5 fadedIn
+            gained))
 ```
 
 That doesn't look like the desired result (and it wouldn't compile - but let's keep that aside for a moment)! But with a little bit of tweaking indentation, we can make it look a little more readable:
 
 ```fsharp
-let blendedDistortion drive input =
+let blendedDistortion2 drive input =
     let amped = input |> amp drive
-    bind (lowPass 0.1 amped) (fun ampedAndLowPassed ->
-    let limited = amped |> limit 0.7
-    bind (lowPass 0.2 limited) (fun limitedAndLowPassed ->
-    let mixed = mix 0.5 limitedAndLowPassed ampedAndLowPassed
-    mixed))
+    let hardLimited = amped |> limit 0.7
+    bind (amped |> lowPass 8000.0) (fun softLimited ->
+    let mixed = mix 0.5 hardLimited softLimited
+    bind (mixed |> fadeIn 0.1) (fun fadedIn ->
+    let gained = amp 0.5 fadedIn
+    gained))
 ```
 
-Better! Now compare this code with the desired code from above: Every time we use a lowPass, there's not let binding anymore, but a bind, that takes exactly the expression on the right side of the let binding. The second parameter of bind is then the "rest of the computation", coded as a lambda function, that has a parameter with the identifier name of the let binding. Hard to read - but look at this picture:
+Better! Now compare this code with the desired code from above: Every time we use a lowPass or fadeIn, there's no let binding anymore, but a bind, that takes exactly the expression on the right side of the let binding. The second parameter of bind is then the "rest of the computation", coded as a lambda function, that has a parameter with the identifier name of the let binding. Hard to read - but look at this picture:
 
 [// TODO: Bild so wie in der Vortragspräsi]
 
@@ -36,13 +38,14 @@ let (>>=) = bind
 ...and remove the parenthesis:
 
 ```fsharp
-let blendedDistortion drive input =
+let blendedDistortion3 drive input =
     let amped = input |> amp drive
-    lowPass 0.1 amped >>= fun ampedAndLowPassed ->
-    let limited = amped |> limit 0.7
-    lowPass 0.2 limited >>= fun limitedAndLowPassed ->
-    let mixed = mix 0.5 limitedAndLowPassed ampedAndLowPassed
-    mixed
+    let hardLimited = amped |> limit 0.7
+    (amped |> lowPass 8000.0) >>= fun softLimited ->
+    let mixed = mix 0.5 hardLimited softLimited
+    (mixed |> fadeIn 0.1) >>= fun fadedIn ->
+    let gained = amp 0.5 fadedIn
+    gained
 ```
 
 Now we are pretty close to the desired code, except that the identifiers of the lambdas are coming after the expression, but we will get rid of that, too, in a minute.
@@ -59,13 +62,14 @@ let returnB x =
 The whole blendedDistortion function then looks like this:
 
 ```fsharp
-let blendedDistortion drive input =
+let blendedDistortion3 drive input =
     let amped = input |> amp drive
-    lowPass 0.1 amped >>= fun ampedAndLowPassed ->
-    let limited = amped |> limit 0.7
-    lowPass 0.2 limited >>= fun limitedAndLowPassed ->
-    let mixed = mix 0.5 limitedAndLowPassed ampedAndLowPassed
-    returnB mixed
+    let hardLimited = amped |> limit 0.7
+    (amped |> lowPass 8000.0) >>= fun softLimited ->
+    let mixed = mix 0.5 hardLimited softLimited
+    (mixed |> fadeIn 0.1) >>= fun fadedIn ->
+    let gained = amp 0.5 fadedIn
+    returnB gained
 ```
 
 ### Using F# language support for bind and return
@@ -84,15 +88,16 @@ let patch = Patch()
 ```fsharp
 let blendedDistortion drive input = patch {
     let amped = input |> amp drive
-    let! ampedAndLowPassed = lowPass 0.1 amped
-    let limited = amped |> limit 0.7
-    let! limitedAndLowPassed = lowPass 0.2 limited
-    let mixed = mix 0.5 limitedAndLowPassed ampedAndLowPassed
-    return mixed
+    let hardLimited = amped |> limit 0.7
+    let! softLimited = amped |> lowPass 8000.0
+    let mixed = mix 0.5 hardLimited softLimited
+    let! fadedIn = mixed |> fadeIn 0.1
+    let gained = amp 0.5 fadedIn
+    return gained
 }
 ```
 
-This looks really close to what we wanted to achieve, except that we have to wrap our code in the "patch" computation, and use let! instead of let every time we deal with Blocks.
+This looks really close to what we wanted to achieve. We only have to wrap our code in the "patch" computation, and use let! instead of let every time we deal with `Blocks` instead of pure functions.
 
 
 TODO: looking at the signature (tuples...)

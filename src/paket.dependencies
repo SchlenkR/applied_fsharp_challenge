@@ -1,5 +1,6 @@
 framework: net45
 source https://www.nuget.org/api/v2
 
+nuget XPlot.GoogleCharts
+nuget XPlot.Plotly
 nuget FSharp.Charting
-# nuget XPlot.GoogleCharts

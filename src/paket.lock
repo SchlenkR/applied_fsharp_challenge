@@ -10,3 +10,6 @@ NUGET
       FSharp.Core
       Google.DataTable.Net.Wrapper (>= 3.1.2)
       Newtonsoft.Json (>= 11.0.2)
+    XPlot.Plotly (2.0)
+      FSharp.Core
+      Newtonsoft.Json (>= 12.0.1)

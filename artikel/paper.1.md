@@ -185,3 +185,9 @@ Abgrenzung zu Observables
 Sequence of values is equal to a stream. It is continuous and doesn't have to be persisted into memory.
 Anforderung: Easily composable
 Zum Schluss: Reduce benutzen als Runtime
+
+
+
+
+* Erklären: Block wird generalisiert; ist also kein float mehr
+* 

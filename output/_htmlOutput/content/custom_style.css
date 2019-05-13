@@ -16,6 +16,14 @@ hint {
     color: darkslategray;
 }
 
+excurs {
+    display: block;
+    padding: 15px;
+    border: 1px 0 solid black;
+    background-color: lightskyblue;
+    color: darkslategray;
+}
+
 img {
     max-width: 100%;
     height: auto;
