@@ -4,3 +4,4 @@ source https://www.nuget.org/api/v2
 nuget FSharp.Compiler.Tools
 
 nuget FSharp.Formatting
+nuget FSharp.Formatting.CommandTool

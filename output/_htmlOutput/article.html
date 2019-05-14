@@ -759,31 +759,210 @@ Note that a `seq` in F# corresponds to `IEnumerable` in .NET. This means that by
 </code></pre>
 <p>The <code>createEvaluatorWithStateAndValues</code> function takes itself a function. A single input value can be passed to that function, that evaluates to a block. That block can then be evaluated itself. It produces state that is assigned to the variable and the value that is yielded (together with the state) to our output sequence. This whole mechanism is wrapped in a function that takes an input array. This is the callback that could finally be passed to an audio backend. It can be evaluated multiple times, receiving the input buffer from the soundcard, maps it's values over with the given block function and outputs a sequence of values that is taken by the audio backend.</p>
 <hint>
-In the following chapter TODO, 
+In the following chapter TODO, we will analyze the results from our `blendedDistortion` effect. For now, we will just have a look on _how_ we can evaluate blocks against an input value sequence.
 </hint>
-<p>Using this function</p>
+<p>Using the <code>createEvaluatorWithStateAndValues</code> function is quite forward:</p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span onmouseout="hideTip(event, 'fs122', 567)" onmouseover="showTip(event, 'fs122', 567)" class="fn">evaluateWithStateAndValues</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs93', 568)" onmouseover="showTip(event, 'fs93', 568)" class="fn">blendedDistortion</span> <span class="n">1.5</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs113', 569)" onmouseover="showTip(event, 'fs113', 569)" class="fn">createEvaluatorWithStateAndValues</span>
+
+<span class="c">// we can evaluate a sequence of input values.</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs123', 570)" onmouseover="showTip(event, 'fs123', 570)" class="id">outputStateAndValues_cycle1</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs122', 571)" onmouseover="showTip(event, 'fs122', 571)" class="fn">evaluateWithStateAndValues</span> <span onmouseout="hideTip(event, 'fs112', 572)" onmouseover="showTip(event, 'fs112', 572)" class="id">inputValues</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs10', 573)" onmouseover="showTip(event, 'fs10', 573)" class="m">Seq</span><span class="pn">.</span><span onmouseout="hideTip(event, 'fs124', 574)" onmouseover="showTip(event, 'fs124', 574)" class="id">toList</span>
+
+<span class="c">// evaluate more than once...</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs125', 575)" onmouseover="showTip(event, 'fs125', 575)" class="id">outputStateAndValues_cycle2</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs122', 576)" onmouseover="showTip(event, 'fs122', 576)" class="fn">evaluateWithStateAndValues</span> <span onmouseout="hideTip(event, 'fs112', 577)" onmouseover="showTip(event, 'fs112', 577)" class="id">inputValues</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs10', 578)" onmouseover="showTip(event, 'fs10', 578)" class="m">Seq</span><span class="pn">.</span><span onmouseout="hideTip(event, 'fs124', 579)" onmouseover="showTip(event, 'fs124', 579)" class="id">toList</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs126', 580)" onmouseover="showTip(event, 'fs126', 580)" class="id">outputStateAndValues_cycle3</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs122', 581)" onmouseover="showTip(event, 'fs122', 581)" class="fn">evaluateWithStateAndValues</span> <span onmouseout="hideTip(event, 'fs112', 582)" onmouseover="showTip(event, 'fs112', 582)" class="id">inputValues</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs10', 583)" onmouseover="showTip(event, 'fs10', 583)" class="m">Seq</span><span class="pn">.</span><span onmouseout="hideTip(event, 'fs124', 584)" onmouseover="showTip(event, 'fs124', 584)" class="id">toList</span>
+</code></pre>
+<p>After creating the <code>evaluateWithStateAndValues</code> function, we can pass the input values sequence (witn n elements) to it and receive a sequence (with n elements) as output. This output sequence contains elements of type <code>BlockOutput</code>, that contain the actual value as well as the state of that cycle:</p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="pn">[</span>
+    <span class="pn">{</span> <span class="id">value</span> <span class="o">=</span> <span class="n">0.0</span><span class="pn">;</span> <span class="id">state</span> <span class="o">=</span> <span class="pn">(</span><span class="n">0.0</span><span class="pn">,</span> <span class="pn">(</span><span class="n">0.1</span><span class="pn">,</span> <span class="pn">(</span><span class="pn">)</span><span class="pn">)</span><span class="pn">)</span> <span class="pn">}</span>
+    <span class="pn">{</span> <span class="id">value</span> <span class="o">=</span> <span class="n">0.009</span><span class="pn">;</span> <span class="id">state</span> <span class="o">=</span> <span class="pn">(</span><span class="n">0.06</span><span class="pn">,</span> <span class="pn">(</span><span class="n">0.2</span><span class="pn">,</span> <span class="pn">(</span><span class="pn">)</span><span class="pn">)</span><span class="pn">)</span> <span class="pn">}</span>
+    <span class="pn">{</span> <span class="id">value</span> <span class="o">=</span> <span class="n">0.0384</span><span class="pn">;</span> <span class="id">state</span> <span class="o">=</span> <span class="pn">(</span><span class="n">0.168</span><span class="pn">,</span> <span class="pn">(</span><span class="n">0.3</span><span class="pn">,</span> <span class="pn">(</span><span class="pn">)</span><span class="pn">)</span><span class="pn">)</span> <span class="pn">}</span>
+    <span class="pn">{</span> <span class="id">value</span> <span class="o">=</span> <span class="n">0.07608</span><span class="pn">;</span> <span class="id">state</span> <span class="o">=</span> <span class="pn">(</span><span class="n">0.3144</span><span class="pn">,</span> <span class="pn">(</span><span class="n">0.4</span><span class="pn">,</span> <span class="pn">(</span><span class="pn">)</span><span class="pn">)</span><span class="pn">)</span> <span class="pn">}</span>
+    <span class="pn">{</span> <span class="id">value</span> <span class="o">=</span> <span class="n">0.119152</span><span class="pn">;</span> <span class="id">state</span> <span class="o">=</span> <span class="pn">(</span><span class="n">0.49152</span><span class="pn">,</span> <span class="pn">(</span><span class="n">0.5</span><span class="pn">,</span> <span class="pn">(</span><span class="pn">)</span><span class="pn">)</span><span class="pn">)</span> <span class="pn">}</span>
+    <span class="pn">{</span> <span class="id">value</span> <span class="o">=</span> <span class="n">0.174152</span><span class="pn">;</span> <span class="id">state</span> <span class="o">=</span> <span class="pn">(</span><span class="n">0.693216</span><span class="pn">,</span> <span class="pn">(</span><span class="n">0.6</span><span class="pn">,</span> <span class="pn">(</span><span class="pn">)</span><span class="pn">)</span><span class="pn">)</span> <span class="pn">}</span>
+    <span class="pn">{</span> <span class="id">value</span> <span class="o">=</span> <span class="n">0.23318592</span><span class="pn">;</span> <span class="id">state</span> <span class="o">=</span> <span class="pn">(</span><span class="n">0.8545728</span><span class="pn">,</span> <span class="pn">(</span><span class="n">0.7</span><span class="pn">,</span> <span class="pn">(</span><span class="pn">)</span><span class="pn">)</span><span class="pn">)</span> <span class="pn">}</span>
+    <span class="pn">{</span> <span class="id">value</span> <span class="o">=</span> <span class="n">0.294640192</span><span class="pn">;</span> <span class="id">state</span> <span class="o">=</span> <span class="pn">(</span><span class="n">0.98365824</span><span class="pn">,</span> <span class="pn">(</span><span class="n">0.8</span><span class="pn">,</span> <span class="pn">(</span><span class="pn">)</span><span class="pn">)</span><span class="pn">)</span> <span class="pn">}</span>
+    <span class="pn">{</span> <span class="id">value</span> <span class="o">=</span> <span class="n">0.3573853184</span><span class="pn">;</span> <span class="id">state</span> <span class="o">=</span> <span class="pn">(</span><span class="n">1.086926592</span><span class="pn">,</span> <span class="pn">(</span><span class="n">0.9</span><span class="pn">,</span> <span class="pn">(</span><span class="pn">)</span><span class="pn">)</span><span class="pn">)</span> <span class="pn">}</span>
+    <span class="pn">{</span> <span class="id">value</span> <span class="o">=</span> <span class="n">0.4206467866</span><span class="pn">;</span> <span class="id">state</span> <span class="o">=</span> <span class="pn">(</span><span class="n">1.169541274</span><span class="pn">,</span> <span class="pn">(</span><span class="n">1.0</span><span class="pn">,</span> <span class="pn">(</span><span class="pn">)</span><span class="pn">)</span><span class="pn">)</span> <span class="pn">}</span>
+    <span class="pn">{</span> <span class="id">value</span> <span class="o">=</span> <span class="n">0.4689082547</span><span class="pn">;</span> <span class="id">state</span> <span class="o">=</span> <span class="pn">(</span><span class="n">1.175633019</span><span class="pn">,</span> <span class="pn">(</span><span class="n">1.0</span><span class="pn">,</span> <span class="pn">(</span><span class="pn">)</span><span class="pn">)</span><span class="pn">)</span> <span class="pn">}</span>
+    <span class="pn">{</span> <span class="id">value</span> <span class="o">=</span> <span class="n">0.4551266038</span><span class="pn">;</span> <span class="id">state</span> <span class="o">=</span> <span class="pn">(</span><span class="n">1.120506415</span><span class="pn">,</span> <span class="pn">(</span><span class="n">1.0</span><span class="pn">,</span> <span class="pn">(</span><span class="pn">)</span><span class="pn">)</span><span class="pn">)</span> <span class="pn">}</span>
+    <span class="pn">{</span> <span class="id">value</span> <span class="o">=</span> <span class="n">0.404101283</span><span class="pn">;</span> <span class="id">state</span> <span class="o">=</span> <span class="pn">(</span><span class="n">1.016405132</span><span class="pn">,</span> <span class="pn">(</span><span class="n">1.0</span><span class="pn">,</span> <span class="pn">(</span><span class="pn">)</span><span class="pn">)</span><span class="pn">)</span> <span class="pn">}</span>
+    <span class="pn">{</span> <span class="id">value</span> <span class="o">=</span> <span class="n">0.2932810264</span><span class="pn">;</span> <span class="id">state</span> <span class="o">=</span> <span class="pn">(</span><span class="n">0.8731241057</span><span class="pn">,</span> <span class="pn">(</span><span class="n">1.0</span><span class="pn">,</span> <span class="pn">(</span><span class="pn">)</span><span class="pn">)</span><span class="pn">)</span> <span class="pn">}</span>
+    <span class="pn">{</span> <span class="id">value</span> <span class="o">=</span> <span class="n">0.1746248211</span><span class="pn">;</span> <span class="id">state</span> <span class="o">=</span> <span class="pn">(</span><span class="n">0.6984992845</span><span class="pn">,</span> <span class="pn">(</span><span class="n">1.0</span><span class="pn">,</span> <span class="pn">(</span><span class="pn">)</span><span class="pn">)</span><span class="pn">)</span> <span class="pn">}</span>
+<span class="pn">]</span>
+</code></pre>
+<p>Now have a look at the state, more concrete: The first tuple element of the innermost tuple: This is the state of our <code>fadeIn</code> function. We defined that it should increase an internal factor by 0.1 every cycle (and then multiply the input with this value to have a fade in effect). The value you see here is the internal factor: It increases by 0.1 until the limit of 1.0 is reached. Looks like it is working - at least from an inner perspective.</p>
+<p><strong>Pause and Continue</strong></p>
+<p>Note that in our whole computation, there are no side effects at all, and our state is completely made up of values. This has some interesting consequences: We could takt the computation code (blendedDistortion) and some arbitrary state object from the list above. We could then (even on another computer) continue the computation by using the computation's code and the state we picked. The resulting elements would be the same on both machines.</p>
+<p><strong>Values Only</strong></p>
 <p>There is also a version that emits not values and state, but only values:</p>
 <pre class="fssnip highlighted"><code lang="fsharp"><span class="c">// (&#39;vIn -&gt; Block&lt;&#39;vOut,&#39;s&gt;) -&gt; (seq&lt;&#39;vIn&gt; -&gt; seq&lt;&#39;vOut&gt;)</span>
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs122', 567)" onmouseover="showTip(event, 'fs122', 567)" class="fn">createEvaluatorWithValues</span> <span class="pn">(</span><span onmouseout="hideTip(event, 'fs114', 568)" onmouseover="showTip(event, 'fs114', 568)" class="fn">blockWithInput</span><span class="pn">:</span> <span class="ta">&#39;</span><span class="id">vIn</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs62', 569)" onmouseover="showTip(event, 'fs62', 569)" class="rt">Block</span><span class="pn">&lt;</span><span class="ta">&#39;</span><span class="id">vOut</span><span class="pn">,</span><span class="ta">&#39;</span><span class="id">s</span><span class="pn">&gt;</span><span class="pn">)</span> <span class="o">=</span>
-    <span class="k">let</span> <span onmouseout="hideTip(event, 'fs123', 570)" onmouseover="showTip(event, 'fs123', 570)" class="fn">stateAndValueEvaluator</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs113', 571)" onmouseover="showTip(event, 'fs113', 571)" class="fn">createEvaluatorWithStateAndValues</span> <span onmouseout="hideTip(event, 'fs114', 572)" onmouseover="showTip(event, 'fs114', 572)" class="fn">blockWithInput</span>
-    <span class="k">fun</span> <span onmouseout="hideTip(event, 'fs116', 573)" onmouseover="showTip(event, 'fs116', 573)" class="id">inputValues</span> <span class="k">-&gt;</span>
-        <span onmouseout="hideTip(event, 'fs123', 574)" onmouseover="showTip(event, 'fs123', 574)" class="fn">stateAndValueEvaluator</span> <span onmouseout="hideTip(event, 'fs116', 575)" onmouseover="showTip(event, 'fs116', 575)" class="id">inputValues</span>
-        <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs10', 576)" onmouseover="showTip(event, 'fs10', 576)" class="m">Seq</span><span class="pn">.</span><span onmouseout="hideTip(event, 'fs11', 577)" onmouseover="showTip(event, 'fs11', 577)" class="id">map</span> <span class="pn">(</span><span class="k">fun</span> <span onmouseout="hideTip(event, 'fs124', 578)" onmouseover="showTip(event, 'fs124', 578)" class="id">stateAndValue</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs124', 579)" onmouseover="showTip(event, 'fs124', 579)" class="id">stateAndValue</span><span class="pn">.</span><span onmouseout="hideTip(event, 'fs54', 580)" onmouseover="showTip(event, 'fs54', 580)" class="id">value</span><span class="pn">)</span>
+<span class="k">let</span> <span class="id">createEvaluatorWithValues</span> <span class="pn">(</span><span class="id">blockWithInput</span><span class="pn">:</span> <span class="id">&#39;</span><span class="id">vIn</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs62', 585)" onmouseover="showTip(event, 'fs62', 585)" class="id">Block</span><span class="pn">&lt;</span><span class="id">&#39;</span><span class="id">vOut</span><span class="pn">,</span><span class="id">&#39;</span><span class="id">s</span><span class="pn">&gt;</span><span class="pn">)</span> <span class="o">=</span>
+    <span class="k">let</span> <span class="id">stateAndValueEvaluator</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs113', 586)" onmouseover="showTip(event, 'fs113', 586)" class="id">createEvaluatorWithStateAndValues</span> <span class="id">blockWithInput</span>
+    <span class="k">fun</span> <span onmouseout="hideTip(event, 'fs112', 587)" onmouseover="showTip(event, 'fs112', 587)" class="id">inputValues</span> <span class="k">-&gt;</span>
+        <span class="id">stateAndValueEvaluator</span> <span onmouseout="hideTip(event, 'fs112', 588)" onmouseover="showTip(event, 'fs112', 588)" class="id">inputValues</span>
+        <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs10', 589)" onmouseover="showTip(event, 'fs10', 589)" class="id">Seq</span><span class="pn">.</span><span onmouseout="hideTip(event, 'fs11', 590)" onmouseover="showTip(event, 'fs11', 590)" class="id">map</span> <span class="pn">(</span><span class="k">fun</span> <span class="id">stateAndValue</span> <span class="k">-&gt;</span> <span class="id">stateAndValue</span><span class="pn">.</span><span class="id">value</span><span class="pn">)</span>
 </code></pre>
-<p>The <code>createEvaluatorWithValues</code> function simply maps the <code>BlockOutput</code> values to just a sequence of pure values.</p>
-<pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span onmouseout="hideTip(event, 'fs125', 581)" onmouseover="showTip(event, 'fs125', 581)" class="fn">evaluate</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs93', 582)" onmouseover="showTip(event, 'fs93', 582)" class="fn">blendedDistortion</span> <span class="n">1.5</span> <span class="o">|&gt;</span> <span class="id">createEvaluator</span>
-
-<span class="c">// cycle 1</span>
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs126', 583)" onmouseover="showTip(event, 'fs126', 583)" class="id">outputValues1</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs125', 584)" onmouseover="showTip(event, 'fs125', 584)" class="fn">evaluate</span> <span onmouseout="hideTip(event, 'fs112', 585)" onmouseover="showTip(event, 'fs112', 585)" class="id">inputValues</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs10', 586)" onmouseover="showTip(event, 'fs10', 586)" class="m">Seq</span><span class="pn">.</span><span onmouseout="hideTip(event, 'fs127', 587)" onmouseover="showTip(event, 'fs127', 587)" class="id">toList</span>
-
-<span class="c">// // ...</span>
-<span class="c">// // cycle 2</span>
-<span class="c">// let outputValues2 = evaluate newInputValues |&gt; Seq.toList</span>
-<span class="c">// // ...</span>
-<span class="c">// // cycle 3</span>
-<span class="c">// let outputValues3 = evaluate evenNewerInputValues |&gt; Seq.toList</span>
-<span class="c">// // ...</span>
+<p>The <code>createEvaluatorWithValues</code> function simply maps the <code>BlockOutput</code> values to just a sequence of pure values. The usage is quite the same as above:</p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="id">evaluateWithValues</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs93', 591)" onmouseover="showTip(event, 'fs93', 591)" class="id">blendedDistortion</span> <span class="n">1.5</span> <span class="o">|&gt;</span> <span class="id">createEvaluatorWithValues</span>
+<span class="k">let</span> <span class="id">outputValues</span> <span class="o">=</span> <span class="id">evaluateWithValues</span> <span onmouseout="hideTip(event, 'fs112', 592)" onmouseover="showTip(event, 'fs112', 592)" class="id">inputValues</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs10', 593)" onmouseover="showTip(event, 'fs10', 593)" class="id">Seq</span><span class="pn">.</span><span onmouseout="hideTip(event, 'fs124', 594)" onmouseover="showTip(event, 'fs124', 594)" class="id">toList</span>
 </code></pre>
+<p>The result is:</p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="pn">[</span>
+    <span class="n">0.0</span>
+    <span class="n">0.009</span>
+    <span class="n">0.0384</span>
+    <span class="n">0.07608</span>
+    <span class="n">0.119152</span>
+    <span class="n">0.174152</span>
+    <span class="n">0.23318592</span>
+    <span class="n">0.29464019</span>
+    <span class="n">0.3573853184</span>
+    <span class="n">0.4206467866</span>
+    <span class="n">0.4689082547</span>
+    <span class="n">0.4551266038</span>
+    <span class="n">0.404101283</span>
+    <span class="n">0.2932810264</span>
+    <span class="n">0.174624821</span>
+<span class="pn">]</span>
+</code></pre>
+<p>The values are the same in both output sequences.</p>
+<h2>Analysis</h2>
+<p>Now we can write blocks, understand the inner mechanism of composing them, and we can evaluate them. Time to have a closer look on our <code>blendedDistortion</code> use case. In the following chapter, we will dissect the parts of <code>blendedDistortion</code> step by step and retrace the flow of values through our computation.</p>
+<p>// TODO: Example link
+// To not only look at lists of values, you find a fsx script that uses XPlot - an F# charting library - in combination with Plotly - a web plotting library.</p>
+<p>Before we begin: The following samples use a constant set of parameters used in our computations:</p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="id">driveConstant</span> <span class="o">=</span> <span class="n">1.5</span>
+<span class="k">let</span> <span class="id">hardLimitConstant</span> <span class="o">=</span> <span class="n">0.7</span>
+<span class="k">let</span> <span class="id">lowPassConstant</span> <span class="o">=</span> <span class="n">0.4</span>
+<span class="k">let</span> <span class="id">mixABConstant</span> <span class="o">=</span> <span class="n">0.5</span>
+<span class="k">let</span> <span class="id">gainConstant</span> <span class="o">=</span> <span class="n">0.5</span>
+<span class="k">let</span> <span class="id">fadeInStepSize</span> <span class="o">=</span> <span class="n">0.1</span>
+</code></pre>
+<p>...and there are some helper functions for evaluating a block against the same set of input values:</p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span onmouseout="hideTip(event, 'fs112', 595)" onmouseover="showTip(event, 'fs112', 595)" class="id">inputValues</span> <span class="o">=</span> <span class="pn">[</span> <span class="n">0.0</span><span class="pn">;</span> <span class="n">0.2</span><span class="pn">;</span> <span class="n">0.4</span><span class="pn">;</span> <span class="n">0.6</span><span class="pn">;</span> <span class="n">0.8</span><span class="pn">;</span> <span class="n">1.0</span><span class="pn">;</span> <span class="n">1.0</span><span class="pn">;</span> <span class="n">1.0</span><span class="pn">;</span> <span class="n">1.0</span><span class="pn">;</span> <span class="n">1.0</span><span class="pn">;</span> <span class="n">0.8</span><span class="pn">;</span> <span class="n">0.6</span><span class="pn">;</span> <span class="n">0.4</span><span class="pn">;</span> <span class="n">0.2</span><span class="pn">;</span> <span class="n">0.0</span> <span class="pn">]</span>
+
+<span class="pn">[&lt;</span><span onmouseout="hideTip(event, 'fs127', 596)" onmouseover="showTip(event, 'fs127', 596)" class="id">AutoOpen</span><span class="pn">&gt;]</span>
+<span class="k">module</span> <span class="id">Helper</span> <span class="o">=</span>
+
+    <span class="k">let</span> <span class="id">toListWithInputValues</span> <span class="id">customBlendedDistortion</span> <span class="o">=</span>
+        <span class="id">customBlendedDistortion</span> <span class="id">driveConstant</span>
+        <span class="o">|&gt;</span> <span class="id">createEvaluatorWithValues</span>
+        <span class="o">&lt;|</span> <span onmouseout="hideTip(event, 'fs112', 597)" onmouseover="showTip(event, 'fs112', 597)" class="id">inputValues</span>
+        <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs10', 598)" onmouseover="showTip(event, 'fs10', 598)" class="id">Seq</span><span class="pn">.</span><span onmouseout="hideTip(event, 'fs124', 599)" onmouseover="showTip(event, 'fs124', 599)" class="id">toList</span>
+    
+    <span class="k">let</span> <span class="id">chart</span> <span class="id">name</span> <span class="id">items</span> <span class="o">=</span> <span class="id">Scatter</span><span class="pn">(</span><span class="id">name</span> <span class="o">=</span> <span class="id">name</span><span class="pn">,</span> <span class="id">y</span> <span class="o">=</span> <span class="id">items</span><span class="pn">)</span>
+    
+    <span class="k">let</span> <span class="id">showAll</span> <span class="pn">(</span><span class="id">x</span><span class="pn">:</span> <span class="id">Scatter</span> <span onmouseout="hideTip(event, 'fs128', 600)" onmouseover="showTip(event, 'fs128', 600)" class="id">list</span><span class="pn">)</span> <span class="o">=</span>
+        <span class="id">x</span>
+        <span class="o">|&gt;</span> <span class="id">Chart</span><span class="pn">.</span><span class="id">Plot</span>
+        <span class="o">|&gt;</span> <span class="id">Chart</span><span class="pn">.</span><span class="id">WithWidth</span> <span class="n">1400</span>
+        <span class="o">|&gt;</span> <span class="id">Chart</span><span class="pn">.</span><span class="id">WithHeight</span> <span class="n">900</span>
+        <span class="o">|&gt;</span> <span class="id">Chart</span><span class="pn">.</span><span class="id">Show</span>
+
+    <span class="k">let</span> <span class="id">show</span> <span class="id">x</span> <span class="o">=</span> <span class="id">showAll</span> <span class="pn">[</span><span class="id">x</span><span class="pn">]</span>
+
+    <span class="k">let</span> <span class="id">evalWithInputValuesAndChart</span> <span class="id">name</span> <span class="id">customBlendedDistortion</span> <span class="o">=</span>
+        <span class="id">chart</span> <span class="id">name</span> <span class="pn">(</span><span class="id">toListWithInputValues</span> <span class="id">customBlendedDistortion</span><span class="pn">)</span>
+</code></pre>
+<h3>Amplification</h3>
+<p>Let's begin with the first part of our effect - the amplification. Beside that, we also show the original input values to compare them:</p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="id">inputChart</span> <span class="o">=</span> <span class="id">chart</span> <span class="s">&quot;0 - Input&quot;</span> <span onmouseout="hideTip(event, 'fs112', 601)" onmouseover="showTip(event, 'fs112', 601)" class="id">inputValues</span>
+
+<span class="k">let</span> <span class="id">ampChart</span> <span class="o">=</span> 
+    <span class="k">fun</span> <span class="id">drive</span> <span class="id">input</span> <span class="k">-&gt;</span> <span class="id">block</span> <span class="pn">{</span>
+        <span class="k">let</span> <span class="id">amped</span> <span class="o">=</span> <span class="id">input</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs7', 602)" onmouseover="showTip(event, 'fs7', 602)" class="id">amp</span> <span class="id">drive</span>
+        <span class="k">return</span> <span class="id">amped</span>
+    <span class="pn">}</span>
+    <span class="o">|&gt;</span> <span class="id">evalWithInputValuesAndChart</span> <span class="s">&quot;1 - amp&quot;</span>
+
+<span class="pn">[</span> <span class="id">inputChart</span><span class="pn">;</span> <span class="id">ampChart</span> <span class="pn">]</span> <span class="o">|&gt;</span> <span class="id">showAll</span>
+</code></pre>
+<p><img src="./chart_input_and_amp.png" alt="Input &lt;-&gt; Amp" /></p>
+<p><strong>Plausibility:</strong></p>
+<p>Since we only amped the signal - which means in our case, we multiply it by a given factor, the result is comprehensive: The <code>drive</code> parameter is set to 1.5, which means: multiply every input value by 1.5. Try it - I didn't find a mistake.</p>
+<hint>
+The effect of the amplifier is not only a "higher volumn", but also a steeper rise and descent of the curve, which - depending on the following process - can result in a stronger distortion (generation of overtones).
+</hint>
+<h3>Hard Limit</h3>
+<p>Next, the limiter comes in the game: It takes the amplified value, and limits it to a given amount - in our case, 0.7.</p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="id">ampHardLimitChart</span> <span class="o">=</span>
+    <span class="k">fun</span> <span class="id">drive</span> <span class="id">input</span> <span class="k">-&gt;</span> <span class="id">block</span> <span class="pn">{</span>
+        <span class="k">let</span> <span class="id">amped</span> <span class="o">=</span> <span class="id">input</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs7', 603)" onmouseover="showTip(event, 'fs7', 603)" class="id">amp</span> <span class="id">drive</span>
+        <span class="k">let</span> <span class="id">hardLimited</span> <span class="o">=</span> <span class="id">amped</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs8', 604)" onmouseover="showTip(event, 'fs8', 604)" class="id">limit</span> <span class="id">hardLimitConstant</span>
+        <span class="k">return</span> <span class="id">hardLimited</span>
+    <span class="pn">}</span>
+    <span class="o">|&gt;</span> <span class="id">evalWithInputValuesAndChart</span> <span class="s">&quot;2 - amp &gt;&gt; hardLimited&quot;</span>
+</code></pre>
+<p><img src="./chart_amp_hardLimit.png" alt="Amp &lt;-&gt; Hard Limit" /></p>
+<h3>Low Pass</h3>
+<p>The low pass is next, and interesting: It is - like the hard limiter - fed by the amplified value. One way of understanding a low pass is that it "follows" a given input signal. We implemented the low pass as a so-called "first order lag element", from the electronic analog currency-resistor-condenser.</p>
+<p>Looking at the chart, we see that the low passed signal follows it's input (the amplified signal), but never reaches it because it's too slow :) When the original signal drops, it is again "faster" than the low pass output. Low pass is always slower, and that's the way it shall be.</p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="id">ampLowPassChart</span> <span class="o">=</span>
+    <span class="k">fun</span> <span class="id">drive</span> <span class="id">input</span> <span class="k">-&gt;</span> <span class="id">block</span> <span class="pn">{</span>
+        <span class="k">let</span> <span class="id">amped</span> <span class="o">=</span> <span class="id">input</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs7', 605)" onmouseover="showTip(event, 'fs7', 605)" class="id">amp</span> <span class="id">drive</span>
+        <span class="k">let!</span> <span class="id">softLimited</span> <span class="o">=</span> <span class="id">amped</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs104', 606)" onmouseover="showTip(event, 'fs104', 606)" class="id">lowPass</span> <span class="id">lowPassConstant</span>
+        <span class="k">return</span> <span class="id">softLimited</span>
+    <span class="pn">}</span>
+    <span class="o">|&gt;</span> <span class="id">evalWithInputValuesAndChart</span> <span class="s">&quot;3 - amp &gt;&gt; lowPass&quot;</span>
+
+<span class="pn">[</span> <span class="id">ampChart</span><span class="pn">;</span> <span class="id">ampLowPassChart</span> <span class="pn">]</span> <span class="o">|&gt;</span> <span class="id">showAll</span>
+</code></pre>
+<p><img src="./chart_amp_lowPass.png" alt="Amp &lt;-&gt; Low Pass" /></p>
+<h3>Mix</h3>
+<p>Mix is easy, since we have to "time" (=state) incorporated. It is completely linear and can be calculated with values at one single point in time, without looking at state or past values.</p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="id">mixedChart</span> <span class="o">=</span>
+    <span class="k">fun</span> <span class="id">drive</span> <span class="id">input</span> <span class="k">-&gt;</span> <span class="id">block</span> <span class="pn">{</span>
+        <span class="k">let</span> <span class="id">amped</span> <span class="o">=</span> <span class="id">input</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs7', 607)" onmouseover="showTip(event, 'fs7', 607)" class="id">amp</span> <span class="id">drive</span>
+        <span class="k">let</span> <span class="id">hardLimited</span> <span class="o">=</span> <span class="id">amped</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs8', 608)" onmouseover="showTip(event, 'fs8', 608)" class="id">limit</span> <span class="id">hardLimitConstant</span>
+        <span class="k">let!</span> <span class="id">softLimited</span> <span class="o">=</span> <span class="id">amped</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs104', 609)" onmouseover="showTip(event, 'fs104', 609)" class="id">lowPass</span> <span class="id">lowPassConstant</span>
+        <span class="k">let</span> <span class="id">mixed</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs31', 610)" onmouseover="showTip(event, 'fs31', 610)" class="id">mix</span> <span class="n">0.5</span> <span class="id">hardLimited</span> <span class="id">softLimited</span>
+        <span class="k">return</span> <span class="id">mixed</span>
+    <span class="pn">}</span>
+    <span class="o">|&gt;</span> <span class="id">evalWithInputValuesAndChart</span> <span class="s">&quot;4 - .. &gt;&gt; mixed&quot;</span>
+
+<span class="pn">[</span> <span class="id">ampHardLimitChart</span><span class="pn">;</span> <span class="id">ampLowPassChart</span><span class="pn">;</span> <span class="id">mixedChart</span> <span class="pn">]</span> <span class="o">|&gt;</span> <span class="id">showAll</span>
+</code></pre>
+<p><img src="./chart_hardLimit_lowPass_mix.png" alt="Hard Limit &lt;-&gt; Low Pass &lt;-&gt; Mix" /></p>
+<h3>Fade In</h3>
+<p>We analyzed at fade in before - when we had a look at evaluating blocks: We saw that the state value increased by the given step size of 0.1 every cycle. That was the inner view - we coudn't check if the final calculation was correct. Now we can: The input of fadeIn (which is the "mix" value) has to be multiplied by the corresponding state value [ 0; 0.1; 0.2 ;...]. Now beleive it or not - I double checked all the values, and the assumption is true! (I'm happy if you don't beleive me and check the facts on your own - it's easy!).</p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="id">mixedFadeInChart</span> <span class="o">=</span>
+    <span class="k">fun</span> <span class="id">drive</span> <span class="id">input</span> <span class="k">-&gt;</span> <span class="id">block</span> <span class="pn">{</span>
+        <span class="k">let</span> <span class="id">amped</span> <span class="o">=</span> <span class="id">input</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs7', 611)" onmouseover="showTip(event, 'fs7', 611)" class="id">amp</span> <span class="id">drive</span>
+        <span class="k">let</span> <span class="id">hardLimited</span> <span class="o">=</span> <span class="id">amped</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs8', 612)" onmouseover="showTip(event, 'fs8', 612)" class="id">limit</span> <span class="id">hardLimitConstant</span>
+        <span class="k">let!</span> <span class="id">softLimited</span> <span class="o">=</span> <span class="id">amped</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs104', 613)" onmouseover="showTip(event, 'fs104', 613)" class="id">lowPass</span> <span class="id">lowPassConstant</span>
+        <span class="k">let</span> <span class="id">mixed</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs31', 614)" onmouseover="showTip(event, 'fs31', 614)" class="id">mix</span> <span class="id">mixABConstant</span> <span class="id">hardLimited</span> <span class="id">softLimited</span>
+        <span class="k">let!</span> <span class="id">fadedIn</span> <span class="o">=</span> <span class="id">mixed</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs108', 615)" onmouseover="showTip(event, 'fs108', 615)" class="id">fadeIn</span> <span class="id">fadeInStepSize</span> <span class="n">0.0</span>
+        <span class="k">return</span> <span class="id">fadedIn</span>
+    <span class="pn">}</span>
+    <span class="o">|&gt;</span> <span class="id">evalWithInputValuesAndChart</span> <span class="s">&quot;5 - .. &gt;&gt; mixed &gt;&gt; fadeIn&quot;</span>
+
+<span class="pn">[</span> <span class="id">mixedChart</span><span class="pn">;</span> <span class="id">mixedFadeInChart</span> <span class="pn">]</span> <span class="o">|&gt;</span> <span class="id">showAll</span>
+</code></pre>
+<p><img src="./chart_mix_fadeIn.png" alt="Mix &lt;-&gt; Fade In" /></p>
+<p><img src="./calculator.png" alt="Doublechecking Fade In" /></p>
+<h3>Gain</h3>
+<p>Now the output gain stage:</p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="id">finalChart</span> <span class="o">=</span>
+    <span class="k">fun</span> <span class="id">drive</span> <span class="id">input</span> <span class="k">-&gt;</span> <span class="id">block</span> <span class="pn">{</span>
+        <span class="k">let</span> <span class="id">amped</span> <span class="o">=</span> <span class="id">input</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs7', 616)" onmouseover="showTip(event, 'fs7', 616)" class="id">amp</span> <span class="id">drive</span>
+        <span class="k">let</span> <span class="id">hardLimited</span> <span class="o">=</span> <span class="id">amped</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs8', 617)" onmouseover="showTip(event, 'fs8', 617)" class="id">limit</span> <span class="id">hardLimitConstant</span>
+        <span class="k">let!</span> <span class="id">softLimited</span> <span class="o">=</span> <span class="id">amped</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs104', 618)" onmouseover="showTip(event, 'fs104', 618)" class="id">lowPass</span> <span class="id">lowPassConstant</span>
+        <span class="k">let</span> <span class="id">mixed</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs31', 619)" onmouseover="showTip(event, 'fs31', 619)" class="id">mix</span> <span class="id">mixABConstant</span> <span class="id">hardLimited</span> <span class="id">softLimited</span>
+        <span class="k">let!</span> <span class="id">fadedIn</span> <span class="o">=</span> <span class="id">mixed</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs108', 620)" onmouseover="showTip(event, 'fs108', 620)" class="id">fadeIn</span> <span class="id">fadeInStepSize</span> <span class="n">0.0</span>
+        <span class="k">let</span> <span class="id">gained</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs7', 621)" onmouseover="showTip(event, 'fs7', 621)" class="id">amp</span> <span class="id">gainConstant</span> <span class="id">fadedIn</span>
+        <span class="k">return</span> <span class="id">gained</span>
+    <span class="pn">}</span>
+    <span class="o">|&gt;</span> <span class="id">evalWithInputValuesAndChart</span> <span class="s">&quot;6 - .. &gt;&gt; mixed &gt;&gt; fadeIn &gt;&gt; gained&quot;</span>
+
+<span class="pn">[</span> <span class="id">mixedFadeInChart</span><span class="pn">;</span> <span class="id">finalChart</span> <span class="pn">]</span> <span class="o">|&gt;</span> <span class="id">showAll</span>
+</code></pre>
+<p><img src="./chart_fadeIn_gain.png" alt="Fade In &lt;-&gt; Gain" /></p>
+<p>This is also just an amplifier, which we parametrized with 0.5.</p>
+<h3>Input - Final</h3>
+<p>And finally - just for fun - the original input values compared to the final result:</p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="pn">[</span> <span class="id">inputChart</span><span class="pn">;</span> <span class="id">finalChart</span> <span class="pn">]</span> <span class="o">|&gt;</span> <span class="id">showAll</span>
+</code></pre>
+<p><img src="./chart_final.png" alt="Final" /></p>
 <h1>A Comprehensible Example</h1>
 
         <div class="tip" id="fs1">val amp : amount:float -&gt; input:float -&gt; float</div>
@@ -907,12 +1086,13 @@ In the following chapter TODO,
 <div class="tip" id="fs119">val block : Block&lt;&#39;vOut,&#39;s&gt;</div>
 <div class="tip" id="fs120">val result : BlockOutput&lt;&#39;a option&gt;</div>
 <div class="tip" id="fs121">BlockOutput.state: &#39;a option</div>
-<div class="tip" id="fs122">val createEvaluatorWithValues : blockWithInput:(&#39;vIn -&gt; Block&lt;&#39;vOut,&#39;s&gt;) -&gt; (seq&lt;&#39;vIn&gt; -&gt; seq&lt;float&gt;)</div>
-<div class="tip" id="fs123">val stateAndValueEvaluator : (seq&lt;&#39;vIn&gt; -&gt; seq&lt;BlockOutput&lt;obj option&gt;&gt;)</div>
-<div class="tip" id="fs124">val stateAndValue : BlockOutput&lt;obj option&gt;</div>
-<div class="tip" id="fs125">val evaluate : (float list -&gt; seq&lt;obj&gt;)</div>
-<div class="tip" id="fs126">val outputValues1 : obj list</div>
-<div class="tip" id="fs127">val toList : source:seq&lt;&#39;T&gt; -&gt; &#39;T list</div>
+<div class="tip" id="fs122">val evaluateWithStateAndValues : (float list -&gt; seq&lt;BlockOutput&lt;obj option&gt;&gt;)</div>
+<div class="tip" id="fs123">val outputStateAndValues_cycle1 : BlockOutput&lt;obj option&gt; list</div>
+<div class="tip" id="fs124">val toList : source:seq&lt;&#39;T&gt; -&gt; &#39;T list</div>
+<div class="tip" id="fs125">val outputStateAndValues_cycle2 : BlockOutput&lt;obj option&gt; list</div>
+<div class="tip" id="fs126">val outputStateAndValues_cycle3 : BlockOutput&lt;obj option&gt; list</div>
+<div class="tip" id="fs127">Multiple items<br />type AutoOpenAttribute =<br />&#160;&#160;inherit Attribute<br />&#160;&#160;new : unit -&gt; AutoOpenAttribute<br />&#160;&#160;new : path:string -&gt; AutoOpenAttribute<br />&#160;&#160;member Path : string<br /><br />--------------------<br />new : unit -&gt; AutoOpenAttribute<br />new : path:string -&gt; AutoOpenAttribute</div>
+<div class="tip" id="fs128">type &#39;T list = List&lt;&#39;T&gt;</div>
 
       </div>
       <div class="span1"></div>

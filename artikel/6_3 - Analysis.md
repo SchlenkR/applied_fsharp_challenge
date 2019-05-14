@@ -74,7 +74,7 @@ Since we only amped the signal - which means in our case, we multiply it by a gi
 The effect of the amplifier is not only a "higher volumn", but also a steeper rise and descent of the curve, which - depending on the following process - can result in a stronger distortion (generation of overtones).
 </hint>
 
-## Hard Limit
+### Hard Limit
 
 Next, the limiter comes in the game: It takes the amplified value, and limits it to a given amount - in our case, 0.7.
 
@@ -90,7 +90,7 @@ let ampHardLimitChart =
 
 ![Amp <-> Hard Limit](./chart_amp_hardLimit.png)
 
-## Low Pass
+### Low Pass
 
 The low pass is next, and interesting: It is - like the hard limiter - fed by the amplified value. One way of understanding a low pass is that it "follows" a given input signal. We implemented the low pass as a so-called "first order lag element", from the electronic analog currency-resistor-condenser.
 
@@ -110,7 +110,7 @@ let ampLowPassChart =
 
 ![Amp <-> Low Pass](./chart_amp_lowPass.png)
 
-## Mix
+### Mix
 
 Mix is easy, since we have to "time" (=state) incorporated. It is completely linear and can be calculated with values at one single point in time, without looking at state or past values.
 
@@ -128,9 +128,9 @@ let mixedChart =
 [ ampHardLimitChart; ampLowPassChart; mixedChart ] |> showAll
 ```
 
-![Hard Limit <-> Low Pass <-> Mix](./chart_amp_lowPass.png)
+![Hard Limit <-> Low Pass <-> Mix](./chart_hardLimit_lowPass_mix.png)
 
-## Fade In
+### Fade In
 
 We analyzed at fade in before - when we had a look at evaluating blocks: We saw that the state value increased by the given step size of 0.1 every cycle. That was the inner view - we coudn't check if the final calculation was correct. Now we can: The input of fadeIn (which is the "mix" value) has to be multiplied by the corresponding state value [ 0; 0.1; 0.2 ;...]. Now beleive it or not - I double checked all the values, and the assumption is true! (I'm happy if you don't beleive me and check the facts on your own - it's easy!).
 
@@ -153,7 +153,7 @@ let mixedFadeInChart =
 
 ![Doublechecking Fade In](./calculator.png)
 
-## Gain
+### Gain
 
 Now the output gain stage:
 
@@ -177,8 +177,7 @@ let finalChart =
 
 This is also just an amplifier, which we parametrized with 0.5.
 
-
-## Input - Final
+### Input - Final
 
 And finally - just for fun - the original input values compared to the final result:
 
