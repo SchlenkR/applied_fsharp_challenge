@@ -1,14 +1,15 @@
 
 type BlockOutput<'value, 'state> = { value: 'value; state: 'state }
 
-type Block<'value, 'state> = 'state -> BlockOutput<'value, 'state>
+type Block<'value, 'state> = Block of ('state -> BlockOutput<'value, 'state>)
+let runB block = let (Block b) = block in b
 
 // bind finally:
 let bind
         (currentBlock: Block<'valueA, 'stateA>)
         (rest: 'valueA -> Block<'valueB, 'stateB>)
         : Block<'valueB, 'stateA * 'stateB> =
-    fun previousStatePack ->
+    Block <| fun previousStatePack ->
 
         // Deconstruct state pack:
         // state is a tuple of ('stateA * 'stateB)
@@ -17,7 +18,7 @@ let bind
         // The result of currentBlock is made up of an actual value and a state that
         // has to be "recorded" by packing it together with the state of the
         // next block.
-        let currentBlockOutput = currentBlock previousStateOfCurrentBlock
+        let currentBlockOutput = (runB currentBlock) previousStateOfCurrentBlock
 
         // Continue evaluating the computation:
         // passing the actual output value of currentBlock to the rest of the computation
@@ -27,12 +28,12 @@ let bind
         // Evaluate the next block and build up the result of this bind function
         // as a block, so that it can be used as a bindable element itself -
         // but this time with state of 2 blocks packed together.
-        let nextBlockOutput = nextBlock previousStateOfNextBlock
+        let nextBlockOutput = (runB nextBlock) previousStateOfNextBlock
         { value = nextBlockOutput.value; state = currentBlockOutput.state, nextBlockOutput.state }
 
 let (>>=) = bind
 
-let returnB x = fun unusedState -> { value = x; state = () }
+let returnB x = Block <| fun unusedState -> { value = x; state = () }
 
 module Blocks =
 
@@ -46,14 +47,14 @@ module Blocks =
     let mix amount a b : float = b * amount + a * (1.0 - amount)
 
     let lowPass timeConstant input =
-        fun lastOut ->
+        Block <| fun lastOut ->
             let diff = lastOut - input
             let out = lastOut - diff * timeConstant
             let newState = out
             { value = out; state = newState }
 
     let fadeIn stepSize input =
-        fun lastValue ->
+        Block <| fun lastValue ->
             let result = input * lastValue
             let newState = min (lastValue + stepSize) 1.0
             { value = result; state = newState }
@@ -103,13 +104,13 @@ module ComputationExpressionSyntax =
 
     open Blocks
 
-    type Patch() =
+    type BlockBuilder() =
         member this.Bind(block, rest) = bind block rest
         member this.Return(x) = returnB x
-    let patch = Patch()
+    let block = BlockBuilder()
 
     // float -> float -> Block<float, float * (float * unit)>
-    let blendedDistortion drive input = patch {
+    let blendedDistortion drive input = block {
         let amped = input |> amp drive
         let hardLimited = amped |> limit 0.7
         let! softLimited = amped |> lowPass 8000.0
@@ -130,10 +131,10 @@ module Execution_ByHand =
     let initialState = 0.0, (0.0, ())
     
     // we evaluate 4 times: time n gets passed in the state of time n-1
-    let result1 = blendedDistortion constantDrive constantInputValue initialState
-    let result2 = blendedDistortion constantDrive constantInputValue result1.state
-    let result3 = blendedDistortion constantDrive constantInputValue result2.state
-    let result4 = blendedDistortion constantDrive constantInputValue result3.state
+    let result1 = (blendedDistortion constantDrive constantInputValue |> runB) initialState
+    let result2 = (blendedDistortion constantDrive constantInputValue |> runB) result1.state
+    let result3 = (blendedDistortion constantDrive constantInputValue |> runB) result2.state
+    let result4 = (blendedDistortion constantDrive constantInputValue |> runB) result3.state
 
     // finally, we accumulate the resulting values in a list
     let resultSequence = [
@@ -142,58 +143,3 @@ module Execution_ByHand =
         result3.value
         result4.value
         ]
-
-// module Execution_ByFold =
-
-//     open ComputationExpressionSyntax
-
-//     let constantDrive = 1.5
-
-//     let initialState = 0.0, (0.0, ())
-
-//     let rectInputValues =
-//         let jump =
-//             let init v = List.init (50) (fun _ -> v) 
-//             init 0.0 @ init 1.0
-//         jump @ jump @ jump @ jump
-
-//     let resultSequence =
-//         rectInputValues
-//         |> Seq.fold
-//             (fun (stateFromLastEvaluation, allResultingValues) nextInputValue ->
-//                 let result = blendedDistortion constantDrive nextInputValue stateFromLastEvaluation
-//                 result.state, allResultingValues @ [result.value])
-//             (initialState,[])
-//         |> fun (state,values) -> values
-
-//     let evaluatePatch patch seed inputValues =
-//         inputValues
-//         |> Seq.fold
-//             (fun (stateFromLastEvaluation, allResultingValues) nextInputValue ->
-//                 let result = patch nextInputValue stateFromLastEvaluation
-//                 result.state, allResultingValues @ [result.value])
-//             (seed,[])
-//         |> fun (state,values) -> values
-//     let blendedDistortionValues = evaluatePatch (blendedDistortion constantDrive) initialState rectInputValues
-
-
-// module ComprehensiveExample =
-
-//     open ComputationExpressionSyntax
-
-//     let accu input =
-//         fun state ->
-//             let result = state + input
-//             { value = result; state = result }
-
-//     let delayBy10 input =
-//         fun (state: float list) ->
-//             match state with
-//             | x::xs -> { value = x; state = xs @ [input] }
-//             | _ -> { value = 0.0; state = [] }
-
-//     // let concat input =
-//     //     fun state ->
-//     //         let result = sprintf "%A--%A" state input
-//     //         { value = result; state = result }
-

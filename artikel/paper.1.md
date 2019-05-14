@@ -194,4 +194,6 @@ Zum Schluss: Reduce benutzen als Runtime
 * patch -> block (der CE builder)
 * Producing sound
 * Die Parameterwerte bei blendedDistortion stimmen teils nicht (8000.0 etc.)
-* 
+* DU nochmal erklären
+    * Wichtig: Besser als Typabkürzungen, weil es hier Doppeldeutigkeiten geben kann.
+    * 
