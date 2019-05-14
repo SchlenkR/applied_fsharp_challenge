@@ -180,7 +180,7 @@ Here it is in the desired form:
 let blendedDistortion drive input =
     let amped = input |> amp drive
     let hardLimited = amped |> limit 0.7
-    let softLimited = amped |> lowPass 8000.0   // we would like to use lowPass
+    let softLimited = amped |> lowPass 0.2      // we would like to use lowPass
     let mixed = mix 0.5 hardLimited softLimited
     let fadedIn = mixed |> fadeIn 0.1           // we would like to use fadeIn
     let gained = amp 0.5 fadedIn

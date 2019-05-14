@@ -37,7 +37,10 @@ RazorLiterate.ProcessMarkdown
       replacements = projInfo,
       includeSource = true)
 
-Directory.GetFiles(sourceDir, "*.tif")
+Array.concat [
+    Directory.GetFiles(sourceDir, "*.tif")
+    Directory.GetFiles(sourceDir, "*.png")
+]
 |> Seq.map FileInfo
 |> Seq.iter (fun f -> f.CopyTo (outputDir + "\\" + f.Name) |> ignore)
 

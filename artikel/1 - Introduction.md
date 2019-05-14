@@ -1,6 +1,4 @@
 
-# Digital Signal Processing with F# (in the Domain of Audio and Music)
-
 ## Einleitung und Motivation
 
 Making music with the help of computers is not a new approach. It started with music N (TODO: Nochmal ausbauen)... and one ask might the question: Why do we need yet another language?

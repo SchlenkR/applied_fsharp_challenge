@@ -77,7 +77,7 @@ As usual, there are a lot of ways to achieve this, and I recommend taking some t
 let blendedDistortion drive input =
     let amped = input |> amp drive
     let hardLimited = amped |> limit 0.7
-    let softLimited = amped |> lowPass 8000.0
+    let softLimited = amped |> lowPass 0.2
     let mixed = mix 0.5 hardLimited softLimited
     let fadedIn = mixed |> fadeIn 0.1
     let gained = amp 0.5 fadedIn

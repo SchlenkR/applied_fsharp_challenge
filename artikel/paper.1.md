@@ -188,12 +188,26 @@ Zum Schluss: Reduce benutzen als Runtime
 
 
 
-
-* Erklären: Block wird generalisiert; ist also kein float mehr
+* FluX erwähnen
+    * leicht andere Begriffe, aber die Konzepte sind die gleichen
+    * in FluX kann man noch rechnen (+, -, etc.)
+    * Modulation <*>
+    * Reader state
+* Why Time is not enough
 * geschachtelte Patches
 * patch -> block (der CE builder)
 * Producing sound
 * Die Parameterwerte bei blendedDistortion stimmen teils nicht (8000.0 etc.)
 * DU nochmal erklären
     * Wichtig: Besser als Typabkürzungen, weil es hier Doppeldeutigkeiten geben kann.
-    * 
+* Note: Bei den gewählten Werten handelt es sich nicht um Hz, sondern um Pseudowerte
+* Generators (sinus)
+* Formatierung: **Note** und so nochmal vereinheitlichen
+* Appendix: Playing Audio
+* Reader (Env) state
+    * Lifting
+* Example-Links an die jeweiligen Stellen einbauen
+* Alternative Composition / Modulation
+* Dinge als "excurs" machen
+* Feedback
+*  

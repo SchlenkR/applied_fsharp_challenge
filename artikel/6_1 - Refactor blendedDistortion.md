@@ -5,7 +5,7 @@
 let blendedDistortion1 drive input =
     let amped = input |> amp drive
     let hardLimited = amped |> limit 0.7
-    bind (amped |> lowPass 8000.0) (fun softLimited ->
+    bind (amped |> lowPass 0.2) (fun softLimited ->
         let mixed = mix 0.5 hardLimited softLimited
         bind (mixed |> fadeIn 0.1) (fun fadedIn ->
             let gained = amp 0.5 fadedIn
@@ -18,7 +18,7 @@ That doesn't look like the desired result (and it wouldn't compile - but let's k
 let blendedDistortion2 drive input =
     let amped = input |> amp drive
     let hardLimited = amped |> limit 0.7
-    bind (amped |> lowPass 8000.0) (fun softLimited ->
+    bind (amped |> lowPass 0.2) (fun softLimited ->
     let mixed = mix 0.5 hardLimited softLimited
     bind (mixed |> fadeIn 0.1) (fun fadedIn ->
     let gained = amp 0.5 fadedIn
@@ -41,7 +41,7 @@ let (>>=) = bind
 let blendedDistortion3 drive input =
     let amped = input |> amp drive
     let hardLimited = amped |> limit 0.7
-    (amped |> lowPass 8000.0) >>= fun softLimited ->
+    (amped |> lowPass 0.2) >>= fun softLimited ->
     let mixed = mix 0.5 hardLimited softLimited
     (mixed |> fadeIn 0.1) >>= fun fadedIn ->
     let gained = amp 0.5 fadedIn
@@ -65,7 +65,7 @@ The whole blendedDistortion function then looks like this:
 let blendedDistortion3 drive input =
     let amped = input |> amp drive
     let hardLimited = amped |> limit 0.7
-    (amped |> lowPass 8000.0) >>= fun softLimited ->
+    (amped |> lowPass 0.2) >>= fun softLimited ->
     let mixed = mix 0.5 hardLimited softLimited
     (mixed |> fadeIn 0.1) >>= fun fadedIn ->
     let gained = amp 0.5 fadedIn
@@ -89,7 +89,7 @@ let patch = Patch()
 let blendedDistortion drive input = patch {
     let amped = input |> amp drive
     let hardLimited = amped |> limit 0.7
-    let! softLimited = amped |> lowPass 8000.0
+    let! softLimited = amped |> lowPass 0.2
     let mixed = mix 0.5 hardLimited softLimited
     let! fadedIn = mixed |> fadeIn 0.1
     let gained = amp 0.5 fadedIn
