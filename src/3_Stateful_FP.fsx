@@ -2,7 +2,7 @@
 type BlockOutput<'value, 'state> = { value: 'value; state: 'state }
 
 type Block<'value, 'state> = Block of ('state -> BlockOutput<'value, 'state>)
-let runB block = let (Block b) = block in b
+let runB (Block block) = block
 
 // bind finally:
 let bind

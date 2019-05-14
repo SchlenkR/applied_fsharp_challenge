@@ -48,8 +48,19 @@ Then, the function signature looks like this:
 Let's name that function, too:
 
 ```fsharp
-type Block<'state> = 'state -> BlockOutput<'state>
+type Block<'state> = Block of ('state -> BlockOutput<'state>)
 ```
+
+<hint>
+The ```Block``` type is a so-called **single case discriminated union**. I suggest you read TODO to understand how to construct and deconstruct unions, but you can try to figure it out by looking at the modified low pass filter code.
+
+TODO: Mehr - wir kann man Funktionen packen und entpacken - run...
+
+```fsharp
+let runB block = let (Block b) = block in b
+```
+
+</hint>
 
 #### Generalizing float
 
