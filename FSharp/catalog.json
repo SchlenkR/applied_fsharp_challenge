@@ -1,1 +1,0 @@
-{"manifestVersion":"1.1","info":{"id":"Microsoft.FSharp.VSIX.Full.Core,version=15.8.20181029.1"},"packages":[{"id":"Microsoft.FSharp.VSIX.Full.Core","version":"15.8.20181029.1","type":"Vsix","payloads":[{"fileName":"VisualFSharpFull.vsix","size":10115015}],"vsixId":"VisualFSharp","extensionDir":"[installdir]\\Common7\\IDE\\CommonExtensions\\Microsoft\\FSharp","installSizes":{}}]}
