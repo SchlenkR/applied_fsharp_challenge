@@ -1,7 +1,7 @@
 
 ## Writing Stateless Processing Functions
 
-Since we now know what a signal is (value that changes over time), and that DSP it is an easy thing (dealing with sequences of values), and knowing that we are interested in functions that transform scalar inputs to scalar outputs, start directly by writing a processing function. Later on, we will see how we can compose these small functions to a larger system.
+Since we now know what a signal is (value that changes over time), and that DSP it is an easy thing (dealing with sequences of values), and knowing that we are interested in functions that transform scalar inputs to scalar outputs, we start directly by writing a processing function. Later on, we will see how we can compose these small functions to a larger system.
 
 ### Amplifier
 
@@ -16,11 +16,9 @@ Linear scaling of a value is mathematically just a multiplication, so that is in
 let amp amount input : float = input * amount
 ```
 
-TODO: Blockschaltbild machen
-
 ### Another example: Hard Limiter
 
-Now that we have our amplifier, we want to have the ability to *limit* a signal to a certain value. Again, there are a lot of ways to do this in a "nice" sounding way, but we will use a very simple technique that leads to a very harsh sounding distortion when the input signal gets limited. The limiter looks like this:
+Now that we have our amplifier, we want to have the ability to *limit* a signal to a certain boundary. Again, there are a lot of ways to do this in a "nice" sounding way, but we will use a very simple technique that leads to a very harsh sounding distortion when the input signal gets limited. The limiter looks like this:
 
 ```fsharp
 // float -> float -> float
@@ -30,18 +28,21 @@ let limit threshold input : float =
     else input
 ```
 
-<excurs data-name="Signatures">
-Note that in this case, we only write the "returning" type (float). The types of *amount* and *input* are infered, which means: The compiler understand which type they are just by looking at the way they are used. We can also write it with explicit types for all input params:
+<excurs data-name="Types and Signatures">
+
+Note that in this case, we only write the resulting type (float). The types of `amount` and `input` are infered, which means: The compiler understand which type they are just by looking at the way they are used. We can also write it with explicit types for all input params:
 
 ```fsharp
 let amp (amount: float) (input: float) : float = input * amount
 ```
 
-In the ongoing samples, we will use the first variant ```fsharp let amp amount input : float = input * amount ``` so that we have some meaningful names for our arguments (for multiplication, the order of arguments dowsn't matter, but there are a lot of other functions where precedence matters (TODO: wirklich precedence?)). SO let's stick with the first version.
+In the ongoing samples, we will use the first variant so that we have some meaningful names for our arguments.
+
 </excurs>
 
 <excurs data-name="Currying">
-Looking closely at the `amp` function, it gets clear that we simple wrapped the `*` function (multiplication of 2 floats). Since F# "curries" functions per default, we can re-write `amp`. If you want to have a deeper look into currying and the consequences it has, I recommend you have a look [here](https://fsharpforfunandprofit.com/posts/currying/).
+
+Looking closely at the `amp` function, it gets clear that we simple wrapped the `*` function (multiplication of 2 floats). Since F# "curries" functions by default, we can re-write `amp`. If you want to have a deeper look into currying and the consequences it has, I recommend you have a look [here](https://fsharpforfunandprofit.com/posts/currying/).
 
 In short, when the compiler curries a function, it means: It transforms one function with n parameters into n nested functions which each have one parameter.
 
@@ -55,7 +56,7 @@ let amp (amount: float) =
 
 And indeed, both ways of writing `amp` result in the same signature: `float -> float -> float`.
 
-Since the F# compiler curries per default, we could now just leave out the last parameter - nothing would change:
+Since the F# compiler curries by default, we could now just leave out the last parameter - nothing would change:
 
 Currying makes it simper:
 
@@ -70,7 +71,8 @@ And again, we could leave out amount, having defined just an alias for the (*) f
 let amp = (*)
 ```
 
-Why is that important:
+**Why is that important:**
 
 Currying is in our case (and in a whole lot of other cases) extremely useful, because it enables us to recognize functions as a kind of "factory function" for inner functions: Applying the first parameter to a function results in another function with the rest of the parameters. This is important when it comes to composing our processing functions.
+
 </excurs>

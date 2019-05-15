@@ -79,32 +79,14 @@
     </ul>
 </div>
 <h2>Introduction</h2>
+<h3>Motivation</h3>
 <p>Making music with the help of computers is not a new approach. It started with <a href="https://en.wikipedia.org/wiki/MUSIC-N">MUSIC / MUSIC-N</a> language family back in the 1950s, that were already capable of synthesizing sounds. There are a lot of graphical tools like <a href="https://puredata.info/">PureData</a>, in which the user can put together signal flows by dragging pre-defined objects onto a canvas and connect their inputs / outputs. Some tools are focused on controlling, composition and live performance, like <a href="https://sonic-pi.net/">Sonic PI</a> or <a href="https://tidalcycles.org/index.php/Welcome">Tidal</a>, while others can do both, like <a href="https://supercollider.github.io/">SuperCollider</a>. There are languages and tools involving interesting concepts to make work with (audio and control) signals easy, like <a href="http://chuck.cs.princeton.edu/">ChucK</a>, that has an interesting way of dealing with time. And of course, there are the widely used multi-paradigm languages like C or C++, where the user can do basically everything - as long as he knows how to do it. And there is way more interesting stuff out there, for example the JavaScript library <a href="http://www.charlie-roberts.com/genish/">genish.js / gibberish</a>, that aims to provide ways where a user can define a syntax tree that is translated into high performance code.</p>
 <p>As developing software is my profession and my hobby, I wanted to understand why there are so many different tools and languages out there, and I started my own work in C#, since this is my main language I work in, with a focus on sample-based generation and processing of audio signals (the code is still available <a href="https://archive.codeplex.com/?p=byond">here</a>, but not maintained anymore). But I soon began to realize that there are disadvantages over the special purpose languages around there. I had to deal with aspects that hadn't anything to do with describing signal flows, and I had to write a lot more boilerplate code. That all smelled like <a href="https://en.wikipedia.org/wiki/No_Silver_Bullet">accidental complexity</a>, and I asked myself, how I could find abstractions that would help me writing code that focussed solely on signal processing.</p>
 <p>So after evaluating several languages, I decided to go for it using F#, mainly due to it's "in-built" flexibility without dealing with macros or other hardcore meta programming, and of course due to the fact that I'm quite familiar with .NET, but that turned out to be not important at all. One personal thing I can state for myself is: I learned a lot, and never regretted my choice of using F#.</p>
-<!-- We will learn that object-oriented concept like instances (and therfore instanciation) as well as aspects of method evaluation can be left out completely, leading to a way of describing signal flows and circuits purely focussing on how values flow through the system.
-<p>Key point: Eigentlich denkt man: OO,  ...this leads to - well, it lead me to pure functions!
-"Well, it lead me to pure functional programming, and we will see why it is superior to an object-oriented approach when we want to express stateful computations. --&gt;</p>
-<!--
-<h2>What you can expect from this article and what not?</h2>
-<p>Bedingungen:
-<em> Write small, easy to understand pieces of code (let's call them "blocks")
-</em> We want to be able to use these blocks in a larger context, means by composing them.
-* It shall then be able to use the results of the composition as blocks themselves, that are again composable, and so on.</p>
-<h2>Abgrenzung</h2>
-<ul>
-<li>Audio signals (means: at the end, we are interested in a sequence of float values)</li>
-<li>Time domain only</li>
-<li>
-Performance: Not considered here.
---&gt;
-</li>
-</ul>
-<h2>What is DSP?</h2>
-<h3>A Brief Definition</h3>
+<h3>What is DSP?</h3>
+<h4>A Brief Definition</h4>
 <p>In the analog world, physical quantities like the electric currency are used to represent a signal that is finally sent to a speaker. Thes quantities are created and altered by low-level components like condensors, resistors, magnetic coils, transistors, diods, etc. which are connected to each others in circuits. They are composed to larger components like operational amplifiers, that are again used to build modules like filters and oscillators which synthesizers and effect processors are made of. Digital audio signal processing (Audio-DSP) is about modeling these components on different levels of abstraction, resulting in the simulation of circuits similar to their analog counterparts (of course, there is no limit in creating completely new forms of synthesizers and effects).</p>
-<!-- Reading this, you might think that DSP fits perfectly in the world of object-oriented programming languages: With it's basic idea of encapsulating mutable state by behavior (methods) and giving it an addressable identity (instance pointer), it maps directly to the concept of having physical entities (like condensors or transistors) that "exist" and hold their's own state that changes over time. This article is about an alternative approach of audio-DSP which is solely based on the paradigm of pure functions using a functional language like F#. -->
-<h3>Quantization of Time and Values</h3>
+<h4>Quantization of Time and Values</h4>
 <p>Digital signal processing - in contrast to analog signal processing - deals with quantized values over a discrete time. What does it mean: Take an analog synthesizer. It creates and outputs a signal based on electric currency - which is continuous from a physical point of view. A computer cannot process values in a continuous way - it has to <em>quantize</em> two things:</p>
 <p><strong>Time:</strong></p>
 <p>This is called sampling, and happens for an audio signal usually at multiples of 44100 times per second (44.1 kHz). Why 44100? Have a look at the <a href="https://en.wikipedia.org/wiki/Nyquist–Shannon_sampling_theorem">Nyquist–Shannon sampling theorem</a> (you don't have to read it to understand this article).</p>
@@ -121,17 +103,32 @@ Performance: Not considered here.
 <p>The point-in-time of the the n-th value in the sequence can easily be calculated when sample rate and starting time are given. This fact is fundamental, and leads to a definition of what <em>processing</em> means:</p>
 <statement>DSP is about creating or changing sequence of values.</statement>
 <p>That sounds very general - and it indeed is! The techniques that are introduced here have basically no specialization in terms of "sound" or "audio" - even if they fit well.</p>
-<h3>Real Time</h3>
+<h4>Real Time</h4>
 <p>"Real Time" originally means: A system is able to react in a predefined timespan. That doesn't necessarily mean it has to be "fast" in the context of the problem, but only that it is reliable in terms of reaction time. Since making music is mostly something that has a "live" character, this is a huge constraint that has impact on how computer music is made. An example: You composed a nice synth line, now you want to apply your hand-written dictortion effect on it. While it is playing, you want to tune parameters of your effect - and you expect to hear a change in sound <em>immediately</em>. Immediately usually means some 10 to 100 ms. When that timespan is longer, IMHO, it's not that fun anymore and also harder because you are missing this direct feedback of your action.</p>
 <p>As a consequence, we have to design systems that work on a per-sample basis instead of having random access to the whole input sequence. This means, it is not possible to wait until the whole input signal (the synth line) is available, and then apply our effect by mapping values. That amount of latency wouldn't be acceptable for the <em>most</em> use cases. So signal processing can be seen as some kind of <em>stream processing</em>.</p>
-<table class="pre"><tr><td class="snippet"><pre class="fssnip"><code lang="TODO:">## Goals of this Articl
-
-* Composable (nicht immer als Ganzes schreiben) and reusable
-* [input signals]: normalized floats with range of -1..1  oder 0..1? TODO
-* Signale sind symmetrisch (schwingen um die Null-Linie). Das muss oft beachtet werden, wenn wir Algorithmen programmieren.
-* Mono
-</code></pre></td></tr></table>
-<h2>Setup / Reproduce the Samples</h2>
+<h3>Distinction</h3>
+<p>Audio DSP and computer music are broad fields. This article focusses on some aspects, while only touching others or leaving them apart. Here, I will list the key concepts and distinctions of this article:</p>
+<ul>
+<li>The focus is on reating and manipulationg samples that finally may result in sounds, rather than on control signals or composition.</li>
+<li>The article focusses on monophonic mono signals, although the concepts allow polyphony and multichannel signals.</li>
+<li>There are no performance considerations made in this article for the introduced concepts.</li>
+<li>Signals are represented in the time domain, not in the frequency domain.</li>
+</ul>
+<h3>F# Getting Started</h3>
+<p>F# is a concise and easy to lean language, since IMHO it has only a few, but powerful key concepts and an easy to understand syntax. If you have never dealt with a language of the ML family, I recommend these sources for getting started with F#:</p>
+<ul>
+<li>
+<p><a href="http://dungpa.github.io/fsharp-cheatsheet/">F# Cheat Sheet</a></p>
+<p>If you are familiar with a modern language like C#, Java, C++, JavaScript, TypeScript, Python (or whatever), this might be a good source for a kick start.</p>
+</li>
+<li>
+<p><a href="https://fsharpforfunandprofit.com/">F# for Fun and Profit (Scott Wlaschin)</a></p>
+<p>This was my primary source when getting involved with F#, and I can definitely recommend it when you want to get in touch with the key concepts of functional programming. For this article, I recommend reading <a href="https://fsharpforfunandprofit.com/series/expressions-and-syntax.html">this</a>, <a href="https://fsharpforfunandprofit.com/posts/elevated-world-2/">this</a>, and <a href="https://fsharpforfunandprofit.com/posts/currying/#series-toc">this</a>.</p>
+</li>
+<li>The book "Real-World Functional Programming: With Examples in F# and C#" by Tomas Petricek.</li>
+<li>The book "Expert F# 4.0" by Don Syme (and others). I especially recommend the capters 2 and 3 that capture the most common functional aspects of F#.</li>
+</ul>
+<h3>Setup and Samples</h3>
 <p>In this article, a lot of code is presented. Since no one has to beleive that the things I'm telling here are true, you can easily reproduce and comprehend them by your own.</p>
 <p>I recommend an easy setup, consisting of the following tools:</p>
 <ul>
@@ -145,9 +142,11 @@ Performance: Not considered here.
 Note that on the Ionide homepage, there is also explained how you can install F# for your platform (macOS, Windows, Linux).</p>
 </li>
 </ul>
+<h4>Article Sources</h4>
 <p>There is a <a href="https://github.com/ronaldschlenker/challenge">github repository</a> that you can clone (or view online) with all the samples included.</p>
+<p>Now we are equiped with every thing we need, so let's get our hands on!</p>
 <h2>Writing Stateless Processing Functions</h2>
-<p>Since we now know what a signal is (value that changes over time), and that DSP it is an easy thing (dealing with sequences of values), and knowing that we are interested in functions that transform scalar inputs to scalar outputs, start directly by writing a processing function. Later on, we will see how we can compose these small functions to a larger system.</p>
+<p>Since we now know what a signal is (value that changes over time), and that DSP it is an easy thing (dealing with sequences of values), and knowing that we are interested in functions that transform scalar inputs to scalar outputs, we start directly by writing a processing function. Later on, we will see how we can compose these small functions to a larger system.</p>
 <h3>Amplifier</h3>
 <p>Amplifying signals is a science for itself and one can spend a lot of money buying analog gear that sounds just "right" - where right is a subjective term based on user preferences. For us, a simple solution will be enough: Amplification of a signal in our context means: Scale values linearly. We can do that like this:</p>
 <p><img src="./chart_input_and_amp.png" alt="Before Amp - After Amp" /></p>
@@ -155,23 +154,22 @@ Note that on the Ionide homepage, there is also explained how you can install F#
 <pre class="fssnip highlighted"><code lang="fsharp"><span class="c">// float -&gt; float -&gt; float</span>
 <span class="k">let</span> <span onmouseout="hideTip(event, 'fs1', 1)" onmouseover="showTip(event, 'fs1', 1)" class="fn">amp</span> <span onmouseout="hideTip(event, 'fs2', 2)" onmouseover="showTip(event, 'fs2', 2)" class="id">amount</span> <span onmouseout="hideTip(event, 'fs3', 3)" onmouseover="showTip(event, 'fs3', 3)" class="id">input</span> <span class="pn">:</span> <span onmouseout="hideTip(event, 'fs4', 4)" onmouseover="showTip(event, 'fs4', 4)" class="vt">float</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs3', 5)" onmouseover="showTip(event, 'fs3', 5)" class="id">input</span> <span class="o">*</span> <span onmouseout="hideTip(event, 'fs2', 6)" onmouseover="showTip(event, 'fs2', 6)" class="id">amount</span>
 </code></pre>
-<p>TODO: Blockschaltbild machen</p>
 <h3>Another example: Hard Limiter</h3>
-<p>Now that we have our amplifier, we want to have the ability to <em>limit</em> a signal to a certain value. Again, there are a lot of ways to do this in a "nice" sounding way, but we will use a very simple technique that leads to a very harsh sounding distortion when the input signal gets limited. The limiter looks like this:</p>
+<p>Now that we have our amplifier, we want to have the ability to <em>limit</em> a signal to a certain boundary. Again, there are a lot of ways to do this in a "nice" sounding way, but we will use a very simple technique that leads to a very harsh sounding distortion when the input signal gets limited. The limiter looks like this:</p>
 <pre class="fssnip highlighted"><code lang="fsharp"><span class="c">// float -&gt; float -&gt; float</span>
 <span class="k">let</span> <span onmouseout="hideTip(event, 'fs5', 7)" onmouseover="showTip(event, 'fs5', 7)" class="fn">limit</span> <span onmouseout="hideTip(event, 'fs6', 8)" onmouseover="showTip(event, 'fs6', 8)" class="id">threshold</span> <span onmouseout="hideTip(event, 'fs3', 9)" onmouseover="showTip(event, 'fs3', 9)" class="id">input</span> <span class="pn">:</span> <span onmouseout="hideTip(event, 'fs4', 10)" onmouseover="showTip(event, 'fs4', 10)" class="vt">float</span> <span class="o">=</span>
     <span class="k">if</span> <span onmouseout="hideTip(event, 'fs3', 11)" onmouseover="showTip(event, 'fs3', 11)" class="id">input</span> <span class="o">&gt;</span> <span onmouseout="hideTip(event, 'fs6', 12)" onmouseover="showTip(event, 'fs6', 12)" class="id">threshold</span> <span class="k">then</span> <span onmouseout="hideTip(event, 'fs6', 13)" onmouseover="showTip(event, 'fs6', 13)" class="id">threshold</span>
     <span class="k">else</span> <span class="k">if</span> <span onmouseout="hideTip(event, 'fs3', 14)" onmouseover="showTip(event, 'fs3', 14)" class="id">input</span> <span class="o">&lt;</span> <span class="o">-</span><span onmouseout="hideTip(event, 'fs6', 15)" onmouseover="showTip(event, 'fs6', 15)" class="id">threshold</span> <span class="k">then</span> <span class="o">-</span><span onmouseout="hideTip(event, 'fs6', 16)" onmouseover="showTip(event, 'fs6', 16)" class="id">threshold</span>
     <span class="k">else</span> <span onmouseout="hideTip(event, 'fs3', 17)" onmouseover="showTip(event, 'fs3', 17)" class="id">input</span>
 </code></pre>
-<excurs data-name="Signatures">
-Note that in this case, we only write the "returning" type (float). The types of *amount* and *input* are infered, which means: The compiler understand which type they are just by looking at the way they are used. We can also write it with explicit types for all input params:
+<excurs data-name="Types and Signatures">
+<p>Note that in this case, we only write the resulting type (float). The types of <code>amount</code> and <code>input</code> are infered, which means: The compiler understand which type they are just by looking at the way they are used. We can also write it with explicit types for all input params:</p>
 <pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span onmouseout="hideTip(event, 'fs1', 18)" onmouseover="showTip(event, 'fs1', 18)" class="fn">amp</span> <span class="pn">(</span><span onmouseout="hideTip(event, 'fs2', 19)" onmouseover="showTip(event, 'fs2', 19)" class="id">amount</span><span class="pn">:</span> <span onmouseout="hideTip(event, 'fs4', 20)" onmouseover="showTip(event, 'fs4', 20)" class="vt">float</span><span class="pn">)</span> <span class="pn">(</span><span onmouseout="hideTip(event, 'fs3', 21)" onmouseover="showTip(event, 'fs3', 21)" class="id">input</span><span class="pn">:</span> <span onmouseout="hideTip(event, 'fs4', 22)" onmouseover="showTip(event, 'fs4', 22)" class="vt">float</span><span class="pn">)</span> <span class="pn">:</span> <span onmouseout="hideTip(event, 'fs4', 23)" onmouseover="showTip(event, 'fs4', 23)" class="vt">float</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs3', 24)" onmouseover="showTip(event, 'fs3', 24)" class="id">input</span> <span class="o">*</span> <span onmouseout="hideTip(event, 'fs2', 25)" onmouseover="showTip(event, 'fs2', 25)" class="id">amount</span>
 </code></pre>
-<p>In the ongoing samples, we will use the first variant <code>fsharp let amp amount input : float = input * amount</code> so that we have some meaningful names for our arguments (for multiplication, the order of arguments dowsn't matter, but there are a lot of other functions where precedence matters (TODO: wirklich precedence?)). SO let's stick with the first version.
-</excurs></p>
+<p>In the ongoing samples, we will use the first variant so that we have some meaningful names for our arguments.</p>
+</excurs>
 <excurs data-name="Currying">
-Looking closely at the `amp` function, it gets clear that we simple wrapped the `*` function (multiplication of 2 floats). Since F# "curries" functions per default, we can re-write `amp`. If you want to have a deeper look into currying and the consequences it has, I recommend you have a look [here](https://fsharpforfunandprofit.com/posts/currying/).
+<p>Looking closely at the <code>amp</code> function, it gets clear that we simple wrapped the <code>*</code> function (multiplication of 2 floats). Since F# "curries" functions by default, we can re-write <code>amp</code>. If you want to have a deeper look into currying and the consequences it has, I recommend you have a look <a href="https://fsharpforfunandprofit.com/posts/currying/">here</a>.</p>
 <p>In short, when the compiler curries a function, it means: It transforms one function with n parameters into n nested functions which each have one parameter.</p>
 <p>In the case of <code>amp</code>, it would look like this (manual currying now):</p>
 <pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span onmouseout="hideTip(event, 'fs1', 26)" onmouseover="showTip(event, 'fs1', 26)" class="fn">amp</span> <span class="pn">(</span><span onmouseout="hideTip(event, 'fs2', 27)" onmouseover="showTip(event, 'fs2', 27)" class="id">amount</span><span class="pn">:</span> <span onmouseout="hideTip(event, 'fs4', 28)" onmouseover="showTip(event, 'fs4', 28)" class="vt">float</span><span class="pn">)</span> <span class="o">=</span>
@@ -179,7 +177,7 @@ Looking closely at the `amp` function, it gets clear that we simple wrapped the 
         <span onmouseout="hideTip(event, 'fs3', 31)" onmouseover="showTip(event, 'fs3', 31)" class="id">input</span> <span class="o">*</span> <span onmouseout="hideTip(event, 'fs2', 32)" onmouseover="showTip(event, 'fs2', 32)" class="id">amount</span>
 </code></pre>
 <p>And indeed, both ways of writing <code>amp</code> result in the same signature: <code>float -&gt; float -&gt; float</code>.</p>
-<p>Since the F# compiler curries per default, we could now just leave out the last parameter - nothing would change:</p>
+<p>Since the F# compiler curries by default, we could now just leave out the last parameter - nothing would change:</p>
 <p>Currying makes it simper:</p>
 <pre class="fssnip highlighted"><code lang="fsharp"><span class="c">// (*) is now prefix style.</span>
 <span class="k">let</span> <span onmouseout="hideTip(event, 'fs7', 33)" onmouseover="showTip(event, 'fs7', 33)" class="fn">amp</span> <span onmouseout="hideTip(event, 'fs8', 34)" onmouseover="showTip(event, 'fs8', 34)" class="id">amount</span> <span class="pn">:</span> <span onmouseout="hideTip(event, 'fs4', 35)" onmouseover="showTip(event, 'fs4', 35)" class="vt">float</span> <span class="o">=</span> <span class="o">(*)</span> <span onmouseout="hideTip(event, 'fs8', 36)" onmouseover="showTip(event, 'fs8', 36)" class="id">amount</span>
@@ -187,9 +185,9 @@ Looking closely at the `amp` function, it gets clear that we simple wrapped the 
 <p>And again, we could leave out amount, having defined just an alias for the (*) function:</p>
 <pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span onmouseout="hideTip(event, 'fs9', 37)" onmouseover="showTip(event, 'fs9', 37)" class="fn">amp</span> <span class="o">=</span> <span class="o">(*)</span>
 </code></pre>
-<p>Why is that important:</p>
-<p>Currying is in our case (and in a whole lot of other cases) extremely useful, because it enables us to recognize functions as a kind of "factory function" for inner functions: Applying the first parameter to a function results in another function with the rest of the parameters. This is important when it comes to composing our processing functions.
-</excurs></p>
+<p><strong>Why is that important:</strong></p>
+<p>Currying is in our case (and in a whole lot of other cases) extremely useful, because it enables us to recognize functions as a kind of "factory function" for inner functions: Applying the first parameter to a function results in another function with the rest of the parameters. This is important when it comes to composing our processing functions.</p>
+</excurs>
 <h2>Composing stateless processing functions</h2>
 <h3>Serial Composition</h3>
 <p>The <code>amp</code> and <code>limit</code> functions are so small that we won't break them into smaller pieces for reusing them. They are kind of "atoms" in our context. But of course, we want to do the opposite: Compose them to larger, higher-level functions (that themselves can be composed again to higher-level functions, and so on).</p>
@@ -203,7 +201,7 @@ Looking closely at the `amp` function, it gets clear that we simple wrapped the 
 <p><img src="./Folie1.tif" alt="Block diagram A" /></p>
 <p>The "drive" parameter controls how much distortion we want: 0 means no distortion; 1 means: a lot of distortion. We achieve this by a feeding the input into our amplifier. The output of the amp is then fed into a limiter. Let's call this technique of somposition <em>serial composition</em>.</p>
 <excurs data-name="Composition Alternatives">
-We use explicit identifier ("amplified", "result") and evaluate our amp and limit functions. This can be a useful technique e.g. when we want to re-use the "amplified" value in a more complex scenario (which we will see shortly). For serial composition, there are alternatives that we can use to make our code more "compact":
+<p>We use explicit identifier ("amplified", "result") and evaluate our amp and limit functions. This can be a useful technique e.g. when we want to re-use the "amplified" value in a more complex scenario (which we will see shortly). For serial composition, there are alternatives that we can use to make our code more "compact":</p>
 <pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span onmouseout="hideTip(event, 'fs15', 49)" onmouseover="showTip(event, 'fs15', 49)" class="fn">distort1</span> <span onmouseout="hideTip(event, 'fs11', 50)" onmouseover="showTip(event, 'fs11', 50)" class="id">drive</span> <span onmouseout="hideTip(event, 'fs3', 51)" onmouseover="showTip(event, 'fs3', 51)" class="id">input</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs5', 52)" onmouseover="showTip(event, 'fs5', 52)" class="fn">limit</span> <span class="n">1.0</span> <span class="pn">(</span><span onmouseout="hideTip(event, 'fs9', 53)" onmouseover="showTip(event, 'fs9', 53)" class="fn">amp</span> <span onmouseout="hideTip(event, 'fs11', 54)" onmouseover="showTip(event, 'fs11', 54)" class="id">drive</span> <span onmouseout="hideTip(event, 'fs3', 55)" onmouseover="showTip(event, 'fs3', 55)" class="id">input</span><span class="pn">)</span>
 
 <span class="k">let</span> <span onmouseout="hideTip(event, 'fs16', 56)" onmouseover="showTip(event, 'fs16', 56)" class="fn">distort2</span> <span onmouseout="hideTip(event, 'fs11', 57)" onmouseover="showTip(event, 'fs11', 57)" class="id">drive</span> <span onmouseout="hideTip(event, 'fs3', 58)" onmouseover="showTip(event, 'fs3', 58)" class="id">input</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs9', 59)" onmouseover="showTip(event, 'fs9', 59)" class="fn">amp</span> <span onmouseout="hideTip(event, 'fs11', 60)" onmouseover="showTip(event, 'fs11', 60)" class="id">drive</span> <span onmouseout="hideTip(event, 'fs3', 61)" onmouseover="showTip(event, 'fs3', 61)" class="id">input</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs5', 62)" onmouseover="showTip(event, 'fs5', 62)" class="fn">limit</span> <span class="n">1.0</span>

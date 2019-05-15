@@ -21,6 +21,7 @@ We can now visualize this function in a so-called *block diagram*:
 The "drive" parameter controls how much distortion we want: 0 means no distortion; 1 means: a lot of distortion. We achieve this by a feeding the input into our amplifier. The output of the amp is then fed into a limiter. Let's call this technique of somposition *serial composition*.
 
 <excurs data-name="Composition Alternatives">
+
 We use explicit identifier ("amplified", "result") and evaluate our amp and limit functions. This can be a useful technique e.g. when we want to re-use the "amplified" value in a more complex scenario (which we will see shortly). For serial composition, there are alternatives that we can use to make our code more "compact":
 
 ```fsharp
@@ -52,6 +53,7 @@ let distort3 drive = amp drive >> limit 1.0
    This is nice, because it is just a "construction manual" for a signal flow. Which means: We don't have to care about evaluating things. And we do not have to specify an "i" (input) explicitly; this "ergibt sich" from the composition itself.
 
    [TODO: Depending on the use case, we will use a mix of all 4 forms.]
+   
 </excurs>
 
 ### Parallel Composition (Branch and Merge)
