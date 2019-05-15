@@ -12,6 +12,10 @@ Unfortunately, this topic is not covered in this article. So I suggest you have 
 * You can actually play sounds, using a Node audio server or CSAudio as backend.
 * There is a small library of effects and oscillators (hp, lp, sin, rect, tri, etc.)
 
+#### Reader State
+
+For real world audio applications, it is necessary to access some "global" values like the current sample rate or the position in a song. In FluX, this is done by extending `Block` with the capability of what is called `reader`. This makes it possible to the block author to access these "environmental" values. It is simply done by passing another parameter beside state to the block function.
+
 ### II - Feedback
 
 <hint>

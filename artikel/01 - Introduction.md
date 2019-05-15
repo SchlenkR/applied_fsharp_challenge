@@ -49,6 +49,12 @@ The point-in-time of the the n-th value in the sequence can easily be calculated
 
 That sounds very general - and it indeed is! The techniques that are introduced here have basically no specialization in terms of "sound" or "audio" - even if they fit well.
 
+<hint>
+
+For reasons of simplification, please note that the sample code won't use real world parameters like `8000.0Hz`. Instead, pseudo values are used to create a comprehensive result and keep code simple.
+
+</hint>
+
 #### Real Time
 
 "Real Time" originally means: A system is able to react in a predefined timespan. That doesn't necessarily mean it has to be "fast" in the context of the problem, but only that it is reliable in terms of reaction time. Since making music is mostly something that has a "live" character, this is a huge constraint that has impact on how computer music is made. An example: You composed a nice synth line, now you want to apply your hand-written dictortion effect on it. While it is playing, you want to tune parameters of your effect - and you expect to hear a change in sound _immediately_. Immediately usually means some 10 to 100 ms. When that timespan is longer, IMHO, it's not that fun anymore and also harder because you are missing this direct feedback of your action.

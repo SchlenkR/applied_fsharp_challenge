@@ -69,8 +69,6 @@ let blendedDistortion drive input =
 
 But this won't work anymore. We cannot just insert "lowPassCtor" in a pure computation. But why not - the compiler allows that? This true, but the `blendedDistortion` function itself is pure: When it gets evaluated multiple times, it would always create a "new" lowPass by calling the lowPassCtor function, with lowPass's "mutable lastOut" field set to 0.0: It would never calculate anything useful.
 
-<!-- Solving this issue is basically easy, but: TODO: Usually, you don't deal with a single stateful block. Instead, you have a lot of them. And it's a burden to the user managing all these that: He needs to create these instance up front, remove them in case he doesn't need them anymore, bind these function pointers (=references) to identifiers that is again captured in a closure, so that he can finally use them in the actual code he want to write. Anyway, we do it for now: We change our blendedDistortion processing function to a factory function (analog to the lowPassCtor): -->
-
 This issue can be solved by creating lowPass and fadeIn instances up front, and capture that reference in a closure. Doing so, we have to change our blendedDistortion processing function to a factory function (analog to the lowPassCtor):
 
 ```fsharp
