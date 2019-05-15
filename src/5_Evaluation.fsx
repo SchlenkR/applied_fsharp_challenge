@@ -31,6 +31,14 @@ let inputValues = [ 0.0; 0.2; 0.4; 0.6; 0.8; 1.0; 1.0; 1.0; 1.0; 1.0; 0.8; 0.6; 
 let evaluateWithStateAndValues = blendedDistortion 1.5 |> createEvaluatorWithStateAndValues
 let outputStateAndValues = evaluateWithStateAndValues inputValues |> Seq.toList
 
+/// evaluates a processing function 10 times.
+let evaluate f =
+    let evaluateWithValues = f |> createEvaluatorWithValues
+    evaluateWithValues (Seq.init 10 id) |> Seq.toList
+
+/// Evaluates a 'generator' function - a function with no input - 10 times.
+let evaluateGen f = (fun _ -> f) |> evaluate
+
 (*
 [
     { value = 0.0; state = (0.0, (0.1, ())) }

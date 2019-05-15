@@ -121,12 +121,10 @@ Zum Schluss: Reduce benutzen als Runtime
 
 * FluX erwähnen
     * leicht andere Begriffe, aber die Konzepte sind die gleichen
-    * in FluX kann man noch rechnen (+, -, etc.)
     * Modulation <*>
     * Reader state
 * Why Time is not enough
 * geschachtelte Patches
-* patch -> block (der CE builder)
 * Producing sound
 * Die Parameterwerte bei blendedDistortion stimmen teils nicht (8000.0 etc.)
 * DU nochmal erklären

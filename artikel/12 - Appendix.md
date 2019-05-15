@@ -1,9 +1,18 @@
 
 ## Appendix
 
-In this section, there are some more concept covered in a loose and very brief way. Have a look at my [FluX](https://github.com/ronaldschlenker/FluX) github repository to see working examples.
+In this section, there are some more concept covered in a loose and very brief way.
 
-### I - Feedback
+The basis for this article is an experimental OSS project I started a year ago. It is called FluX (it was called FLooping before, and I will propably change the name again). You can find the project on [Github](https://github.com/ronaldschlenker/FluX).
+
+### I - Playing Audio
+
+Unfortunately, this topic is not covered in this article. So I suggest you have a look at FluX:
+
+* You can actually play sounds, using a Node audio server or CSAudio as backend.
+* There is a small library of effects and oscillators (hp, lp, sin, rect, tri, etc.)
+
+### II - Feedback
 
 <hint>
 
@@ -86,5 +95,65 @@ let myFxWithFeedback input =
         }
 ```
 
-### II - Arithmetic operators
+### III - Arithmetic operators
 
+Sometimes, you want to make some arithmetic calculation from a block's result *directly*, and not use the identifier of the bound value:
+
+Instead of this...
+
+```fsharp
+block {
+    // we can add a Block and a float
+    let! cnt = (counter 0.0 1.0)
+    let cntPlus100 = cnt + 100.0
+    // do some other things with cntPlus100...
+    return cnt
+}
+```
+
+...you want to do this:
+
+```fsharp
+block {
+    // we can add a Block and a float
+    let! cnt = (counter 0.0 1.0) + 100.0
+    return cnt
+}
+```
+
+...or you even want to add 2 blocks directly:
+
+```fsharp
+block {
+    // we can add 2 Blocks
+    let! cnt = (counter 0.0 1.0) + (counter 0.0 10.0)
+    return cnt
+}
+```
+
+This is possible with a little tricky mechanism incorporating F# "Statically Resolved Type Parameters", type extensions, and a Single Case Union. An explanation why and how this works is worth an article. Unfortunately, I cannot find the link to a presentation I once had, so please forgive me not referencing the author of this idea.
+
+Anyway, here is the code (as an example for `+`):
+
+```fsharp
+type ArithmeticExt = ArithmeticExt with
+    static member inline (?<-) (ArithmeticExt, a: Block<'v,'s>, b) =
+        block {
+            let! aValue = a
+            return aValue + b
+        }
+    static member inline (?<-) (ArithmeticExt, a, b: Block<'v,'s>) =
+        block {
+            let! bValue = b
+            return a + bValue
+        }
+    static member inline (?<-) (ArithmeticExt, a: Block<'v1,'s1>, b: Block<'v2,'s2>) =
+        block {
+            let! aValue = a
+            let! bValue = b
+            return aValue + bValue
+        }
+    static member inline (?<-) (ArithmeticExt, a, b) = a + b
+
+let inline (+) a b = (?<-) ArithmeticExt a b
+```

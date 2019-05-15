@@ -37,15 +37,10 @@ module ``UseCase 1: Two counter alternatives`` =
                 return { out=res; feedback=res }
             }
 
-    // evaluate
-    let evaluate f =
-        let evaluateWithValues = f |> createEvaluatorWithValues
-        evaluateWithValues (Seq.init 10 id) |> Seq.toList
-
-    let evaluatedCounter = (fun i -> counter 0.0 1.5) |> evaluate
+    let evaluatedCounter = counter 0.0 1.5 |> evaluateGen
     // evaluates to: [1.5; 3.0; 4.5; 6.0; 7.5; 9.0; 10.5; 12.0; 13.5; 15.0]
 
-    let evaluatedCounterAlt = (fun i -> counterAlt 0.0 1.5) |> evaluate
+    let evaluatedCounterAlt = counterAlt 0.0 1.5 |> evaluateGen
     // evaluates to: [1.5; 3.0; 4.5; 6.0; 7.5; 9.0; 10.5; 12.0; 13.5; 15.0]
 
 module ``UseCase 2: State in 'block' syntax`` =
