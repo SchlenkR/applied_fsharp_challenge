@@ -60,11 +60,11 @@ That's it. Think about it: The bigger the difference between current input and t
 
 Let's see how we can implement it in a block diagram:
 
-![Low pass filter](./lpf_inside.png)
+![Low pass filter](./bs_delay.png)
 
 One interesting thing to notice: There is no explicit state in the way that we store or memorize values. Instead, the state is modeled as "output value delayed by 1 sample" ("t-1" block), which is then fed back into the next evaluation of the whole function. **This is a key point** because we can model any kind of local state in that way - no matter how that state is structured (it doesn't have to be a simple `float`- it could be anything). A abstract "block with state" can then be modeled like this:
 
-![Block with state and parameters](./block_with_state_and_params.png)
+![Block with state and parameters](./bs_block_with_state.png)
 
 Beside the output value, there is an output state. And beside the input value, there comes an input state that is the output state from the last evaluation (plus curried function parameters - as usual).
 

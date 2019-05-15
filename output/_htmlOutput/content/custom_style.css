@@ -41,6 +41,19 @@ img {
     height: auto;
 }
 
+img[src*="rc_glied"] {
+    width: 30%;
+}
+img[src*="bs_a"] {
+    width: 60%;
+}
+img[src*="bs_block_with_state"] {
+    width: 50%;
+}
+img[src*="calculator"] {
+    width: 60%;
+}
+
 .container {
     width: 800px;
     margin: auto;

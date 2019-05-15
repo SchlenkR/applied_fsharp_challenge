@@ -94,7 +94,7 @@ So what can be done to abstract instance management?
 
 Looking again at this block diagram:
 
-![Block diagram B](./Folie3.png)
+![Block diagram B](./bs_b.png)
 
 There is one important thing to notice: Blocks themselves are not explicitly instanciated and then referenced by an identifier in the computation; they just sit in the place where they are used; they are kind of "inlined", even if they carry their own local state.
 

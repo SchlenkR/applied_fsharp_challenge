@@ -103,6 +103,9 @@
 <p>The point-in-time of the the n-th value in the sequence can easily be calculated when sample rate and starting time are given. This fact is fundamental, and leads to a definition of what <em>processing</em> means:</p>
 <statement>DSP is about creating or changing sequence of values.</statement>
 <p>That sounds very general - and it indeed is! The techniques that are introduced here have basically no specialization in terms of "sound" or "audio" - even if they fit well.</p>
+<hint>
+<p>For reasons of simplification, please note that the sample code won't use real world parameters like <code>8000.0Hz</code>. Instead, pseudo values are used to create a comprehensive result and keep code simple.</p>
+</hint>
 <h4>Real Time</h4>
 <p>"Real Time" originally means: A system is able to react in a predefined timespan. That doesn't necessarily mean it has to be "fast" in the context of the problem, but only that it is reliable in terms of reaction time. Since making music is mostly something that has a "live" character, this is a huge constraint that has impact on how computer music is made. An example: You composed a nice synth line, now you want to apply your hand-written dictortion effect on it. While it is playing, you want to tune parameters of your effect - and you expect to hear a change in sound <em>immediately</em>. Immediately usually means some 10 to 100 ms. When that timespan is longer, IMHO, it's not that fun anymore and also harder because you are missing this direct feedback of your action.</p>
 <p>As a consequence, we have to design systems that work on a per-sample basis instead of having random access to the whole input sequence. This means, it is not possible to wait until the whole input signal (the synth line) is available, and then apply our effect by mapping values. That amount of latency wouldn't be acceptable for the <em>most</em> use cases. So signal processing can be seen as some kind of <em>stream processing</em>.</p>
@@ -198,7 +201,10 @@ Note that on the Ionide homepage, there is also explained how you can install F#
     <span onmouseout="hideTip(event, 'fs14', 48)" onmouseover="showTip(event, 'fs14', 48)" class="id">limited</span>
 </code></pre>
 <p>We can now visualize this function in a so-called <strong>block diagram</strong>:</p>
-<p><img src="./Folie1.png" alt="Block diagram A" /></p>
+<p><img src="./bs_a.png" alt="Block diagram A" /></p>
+<hint>
+Note that in the block diagram, we assume all input parameters of a block as curried. The parameter order is from bottom to top.
+</hint>
 <p>The <code>drive</code> parameter controls how much distortion we want: 1 means no distortion, the bigger the value gets means: a lot of distortion. We achieve this by a feeding the input into our amplifier. The output of the amp is then fed into a limiter. Let's call this technique of somposition <strong>serial composition</strong>.</p>
 <excurs data-name="Composition Alternatives">
 <p>We use explicit identifier (<code>amplified</code>, <code>result</code>) and evaluate our amp and limit functions. This can be a useful technique e.g. when we want to re-use the <code>amplified</code> value in a more complex scenario (which we will see shortly). For serial composition, there are alternatives that we can use to make our code more "compact":</p>
@@ -232,8 +238,7 @@ Parallel composition doesn't necessarily mean that branches are executed in para
 <p>Now that we understand what serial composition is, we know that it is useful to have functions of type <code>float -&gt; float</code>, and we understand that serial composition of these functions can be done by using the <code>&gt;&gt;</code> or <code>|&gt;</code> operators.</p>
 <p>Let's extend our sample in a way where the techniques of serial composition is not sufficient.</p>
 <p>The distortion effect we just engineered sounds nice, and we want to be able to "blend it in" together with a low pass filtered version of the original signal. Low pass filter means: We want to get rid of the high frequencies and preserve only the low frequencies. And at the end, the whole result shall be faded in over a certain time and gained (amplified). Visualizing this in a block diagram is easy:</p>
-<p>TODO: Das Blockschaltbild anpassen mit fadeIn und gain
-<img src="./Folie3.png" alt="Block diagram B" /></p>
+<p><img src="./bs_b.png" alt="Block diagram B" /></p>
 <p>Some things to note on the block diagram:</p>
 <ul>
 <li>The output value of "amp" is used in 2 following branches.</li>
@@ -372,9 +377,9 @@ Parallel composition doesn't necessarily mean that branches are executed in para
 </ol>
 <p>That's it. Think about it: The bigger the difference between current input and the last output value, the faster the condensor "loads up". The smaller the time constant gets, the slower the system reacts to input value changes - a low pass filter!</p>
 <p>Let's see how we can implement it in a block diagram:</p>
-<p><img src="./lpf_inside.png" alt="Low pass filter" /></p>
+<p><img src="./bs_delay.png" alt="Low pass filter" /></p>
 <p>One interesting thing to notice: There is no explicit state in the way that we store or memorize values. Instead, the state is modeled as "output value delayed by 1 sample" ("t-1" block), which is then fed back into the next evaluation of the whole function. <strong>This is a key point</strong> because we can model any kind of local state in that way - no matter how that state is structured (it doesn't have to be a simple <code>float</code>- it could be anything). A abstract "block with state" can then be modeled like this:</p>
-<p><img src="./block_with_state_and_params.png" alt="Block with state and parameters" /></p>
+<p><img src="./bs_block_with_state.png" alt="Block with state and parameters" /></p>
 <p>Beside the output value, there is an output state. And beside the input value, there comes an input state that is the output state from the last evaluation (plus curried function parameters - as usual).</p>
 <p>In the following chapters, we will have a look on ways of writing and composing such functions, and we will understand that these ways provide less or more compfort for the user who wants to express signal processing computations.</p>
 <p>We start with an object oriented programming approach.</p>
@@ -428,7 +433,6 @@ Parallel composition doesn't necessarily mean that branches are executed in para
     <span onmouseout="hideTip(event, 'fs24', 224)" onmouseover="showTip(event, 'fs24', 224)" class="id">gained</span>
 </code></pre>
 <p>But this won't work anymore. We cannot just insert "lowPassCtor" in a pure computation. But why not - the compiler allows that? This true, but the <code>blendedDistortion</code> function itself is pure: When it gets evaluated multiple times, it would always create a "new" lowPass by calling the lowPassCtor function, with lowPass's "mutable lastOut" field set to 0.0: It would never calculate anything useful.</p>
-<!-- Solving this issue is basically easy, but: TODO: Usually, you don't deal with a single stateful block. Instead, you have a lot of them. And it's a burden to the user managing all these that: He needs to create these instance up front, remove them in case he doesn't need them anymore, bind these function pointers (=references) to identifiers that is again captured in a closure, so that he can finally use them in the actual code he want to write. Anyway, we do it for now: We change our blendedDistortion processing function to a factory function (analog to the lowPassCtor): -->
 <p>This issue can be solved by creating lowPass and fadeIn instances up front, and capture that reference in a closure. Doing so, we have to change our blendedDistortion processing function to a factory function (analog to the lowPassCtor):</p>
 <pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span onmouseout="hideTip(event, 'fs55', 225)" onmouseover="showTip(event, 'fs55', 225)" class="fn">blendedDistortionCtor</span><span class="pn">(</span><span class="pn">)</span> <span class="o">=</span>
 
@@ -448,7 +452,7 @@ Parallel composition doesn't necessarily mean that branches are executed in para
 <p>That works! But it's a burden for the user: Every time a stateful function is needed, it has to be declared before it can be used inside of the computation, and the instance has to be removed when it is not needed anymore. When authoring more complex effects or synthesizers, this can be a major pain point: The user's focus is modeling a DSP computation, and not instance management. Since instance management is something that has to be done, it draws away attention from the primary goal and interrupts the workflow of the programmer.</p>
 <p>So what can be done to abstract instance management?</p>
 <p>Looking again at this block diagram:</p>
-<p><img src="./Folie3.png" alt="Block diagram B" /></p>
+<p><img src="./bs_b.png" alt="Block diagram B" /></p>
 <p>There is one important thing to notice: Blocks themselves are not explicitly instanciated and then referenced by an identifier in the computation; they just sit in the place where they are used; they are kind of "inlined", even if they carry their own local state.</p>
 <p>So it seems that in contrast to OOP, block diagrams work like this:</p>
 <statement>A function with state is not identified by a reference, but by it's position inside of a computation.</statement>
@@ -468,9 +472,9 @@ Parallel composition doesn't necessarily mean that branches are executed in para
 <p>Reaching this goal means: The user does not have to deal with instance management, because the aspect of local state would simply result from the way a computation is built by the user.</p>
 <h2>Writing Stateful Functions</h2>
 <p>First, let's look again at the block diagram that defines a stateful function:</p>
-<p><img src="./block_with_state.png" alt="Block with state" /></p>
+<p><img src="./bs_block_with_state.png" alt="Block with state" /></p>
 <p>Notice that the feedback of state is the key point: How can that be achieved? To find an answer, let's just ignore it for a moment. We assume that there will be something that can handle this issue for us. What remains is a function with "state in" and "state out" beside the actual in and out values:</p>
-<p><img src="./block_with_state_no_feedback.png" alt="block_with_state_no_feedback" /></p>
+<p><img src="./bs_block_with_state_no_feedback.png" alt="block_with_state_no_feedback" /></p>
 <p>Assuming that some mechsnism passes in previous state and records output state (that gets passed in as previous state at the next evaluation, and so on), we can rewrite the object oriented low pass filter code by transforming it to a pure function:</p>
 <pre class="fssnip highlighted"><code lang="fsharp"><span class="c">// float -&gt; float -&gt; float -&gt; float * float</span>
 <span class="k">let</span> <span onmouseout="hideTip(event, 'fs59', 253)" onmouseover="showTip(event, 'fs59', 253)" class="fn">lowPass</span> <span onmouseout="hideTip(event, 'fs46', 254)" onmouseover="showTip(event, 'fs46', 254)" class="id">timeConstant</span> <span class="pn">(</span><span onmouseout="hideTip(event, 'fs3', 255)" onmouseover="showTip(event, 'fs3', 255)" class="id">input</span><span class="pn">:</span> <span onmouseout="hideTip(event, 'fs4', 256)" onmouseover="showTip(event, 'fs4', 256)" class="vt">float</span><span class="pn">)</span> <span class="o">=</span>
@@ -939,7 +943,7 @@ Parallel composition doesn't necessarily mean that branches are executed in para
 <p><strong>Plausibility:</strong></p>
 <p>Looking at the chart, we see that the low passed signal follows it's input (the amplified signal), but never reaches it because it's too slow :) When the original signal drops, it is again "faster" than the low pass output. Low pass is always slower, and that's the way it shall be.</p>
 <h3>Mix</h3>
-<p>Mix is easy, since we have to "time" (=state) incorporated. It is completely linear and can be calculated with values at one single point in time, without looking at state or past values.</p>
+<p>Mix is easy, since we have no "time" (no state) incorporated. It is completely linear and can be calculated with values at one single point in time, without looking at state or past values.</p>
 <pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="id">mixedChart</span> <span class="o">=</span>
     <span class="k">fun</span> <span class="id">drive</span> <span class="id">input</span> <span class="k">-&gt;</span> <span class="id">block</span> <span class="pn">{</span>
         <span class="k">let</span> <span class="id">amped</span> <span class="o">=</span> <span class="id">input</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs9', 680)" onmouseover="showTip(event, 'fs9', 680)" class="id">amp</span> <span class="id">drive</span>
@@ -971,7 +975,7 @@ Parallel composition doesn't necessarily mean that branches are executed in para
 </code></pre>
 <p><img src="./chart_mix_fadeIn.png" alt="Mix &lt;-&gt; Fade In" /></p>
 <p><strong>Plausibility:</strong></p>
-<p>We analyzed at fade in before - when we had a look at evaluating blocks: We saw that the state value increased by the given step size of 0.1 every cycle. That was the inner view - we coudn't check if the final calculation was correct. Now we can: The input of fadeIn (which is the "mix" value) has to be multiplied by the corresponding state value [ 0; 0.1; 0.2 ;...]. Now beleive it or not - I double checked all the values, and the assumption is true! (I'm happy if you don't beleive me and check the facts on your own - it's easy!).</p>
+<p>We analyzed fadeIn before - when we had a look at evaluating blocks: We saw that the state value increased by the given step size of 0.1 every cycle. That was the inner view - we coudn't check if the final calculation was correct. Now we can: The input of fadeIn (which is the "mix" value) has to be multiplied by the corresponding state value [ 0; 0.1; 0.2 ;...]. Now beleive it or not - I double checked all the values, and the assumption is true! (I'm happy if you don't beleive me and check the facts on your own - it's easy!).</p>
 <p><img src="./calculator.png" alt="Doublechecking Fade In" /></p>
 <h3>Gain</h3>
 <p>Now the output gain stage:</p>
@@ -991,12 +995,134 @@ Parallel composition doesn't necessarily mean that branches are executed in para
 </code></pre>
 <p><img src="./chart_fadeIn_gain.png" alt="Fade In &lt;-&gt; Gain" /></p>
 <p><strong>Plausibility:</strong></p>
-<p>This is also just an amplifier, which we parametrized with 0.5.</p>
+<p>This is also just an amplifier, which we parametrized with 0.5. So divide an input values by 2.0, and you get the result.</p>
 <h3>Input - Final</h3>
 <p>And finally - just for fun - the original input values compared to the final result:</p>
 <pre class="fssnip highlighted"><code lang="fsharp"><span class="pn">[</span> <span class="id">inputChart</span><span class="pn">;</span> <span class="id">finalChart</span> <span class="pn">]</span> <span class="o">|&gt;</span> <span class="id">showAll</span>
 </code></pre>
 <p><img src="./chart_final.png" alt="Final" /></p>
+<h2>Appendix</h2>
+<p>In this section, there are some more concept covered in a loose and very brief way.</p>
+<p>The basis for this article is an experimental OSS project I started a year ago. It is called FluX (it was called FLooping before, and I will propably change the name again). You can find the project on <a href="https://github.com/ronaldschlenker/FluX">Github</a>.</p>
+<h3>I - Playing Audio</h3>
+<p>Unfortunately, this topic is not covered in this article. So I suggest you have a look at FluX:</p>
+<ul>
+<li>You can actually play sounds, using a Node audio server or CSAudio as backend.</li>
+<li>There is a small library of effects and oscillators (hp, lp, sin, rect, tri, etc.)</li>
+</ul>
+<h4>Reader State</h4>
+<p>For real world audio applications, it is necessary to access some "global" values like the current sample rate or the position in a song. In FluX, this is done by extending <code>Block</code> with the capability of what is called <code>reader</code>. This makes it possible to the block author to access these "environmental" values. It is simply done by passing another parameter beside state to the block function.</p>
+<h3>II - Feedback</h3>
+<hint>
+<p>See <code>src/8_Feedback.fsx</code> as sample source.</p>
+</hint>
+<p>Since we can do serial and parallel composition and we have a way for blocks to keep local state, there is a thing missing: Make a past value from inside of a computation available in the next cycle.</p>
+<p>Here is a block diagram explaining this:</p>
+<p>// TODO: Blockschaltbild Feedback</p>
+<p>Achieving this with the <code>block { ... }</code> syntax is not an easy way. Although we could emit a result at the end of the computation, there would be no direct way of accessing it as state in the next cycle. The state that is collected inside the <code>block { ... }</code> is not accessible to the user.</p>
+<p>But there is a solution: Feedback!</p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="k">type</span> <span class="id">Fbd</span><span class="pn">&lt;</span><span class="id">&#39;</span><span class="id">fbdValue</span><span class="pn">,</span> <span class="id">&#39;</span><span class="id">value</span><span class="pn">&gt;</span> <span class="o">=</span> <span class="pn">{</span> <span class="id">feedback</span><span class="pn">:</span> <span class="id">&#39;</span><span class="id">fbdValue</span><span class="pn">;</span> <span class="id">out</span><span class="pn">:</span> <span class="id">&#39;</span><span class="id">value</span> <span class="pn">}</span>
+
+<span class="k">let</span> <span class="pn">(</span><span class="o">&lt;-&gt;</span><span class="pn">)</span> <span class="id">seed</span> <span class="pn">(</span><span class="id">f</span><span class="pn">:</span> <span class="id">&#39;</span><span class="id">fbdValue</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs75', 695)" onmouseover="showTip(event, 'fs75', 695)" class="id">Block</span><span class="pn">&lt;</span><span class="id">Fbd</span><span class="pn">&lt;</span><span class="id">&#39;</span><span class="id">fbdValue</span><span class="pn">,</span><span class="id">&#39;</span><span class="id">value</span><span class="pn">&gt;</span><span class="pn">,</span><span class="id">&#39;</span><span class="id">state</span><span class="pn">&gt;</span><span class="pn">)</span> <span class="o">=</span>
+    <span onmouseout="hideTip(event, 'fs75', 696)" onmouseover="showTip(event, 'fs75', 696)" class="id">Block</span> <span class="o">&lt;|</span> <span class="k">fun</span> <span class="id">prev</span> <span class="k">-&gt;</span>
+        <span class="k">let</span> <span class="id">myPrev</span><span class="pn">,</span><span class="id">innerPrev</span> <span class="o">=</span> 
+            <span class="k">match</span> <span class="id">prev</span> <span class="k">with</span>
+            <span class="pn">|</span> <span onmouseout="hideTip(event, 'fs110', 697)" onmouseover="showTip(event, 'fs110', 697)" class="id">None</span>            <span class="k">-&gt;</span> <span class="id">seed</span><span class="pn">,</span><span onmouseout="hideTip(event, 'fs110', 698)" onmouseover="showTip(event, 'fs110', 698)" class="id">None</span>
+            <span class="pn">|</span> <span onmouseout="hideTip(event, 'fs111', 699)" onmouseover="showTip(event, 'fs111', 699)" class="id">Some</span> <span class="pn">(</span><span class="id">my</span><span class="pn">,</span><span class="id">inner</span><span class="pn">)</span> <span class="k">-&gt;</span> <span class="id">my</span><span class="pn">,</span><span class="id">inner</span>
+        <span class="k">let</span> <span class="id">fRes</span> <span class="o">=</span> <span class="id">f</span> <span class="id">myPrev</span>
+        <span class="k">let</span> <span class="id">lRes</span> <span class="o">=</span> <span class="pn">(</span><span onmouseout="hideTip(event, 'fs70', 700)" onmouseover="showTip(event, 'fs70', 700)" class="id">runB</span> <span class="id">fRes</span><span class="pn">)</span> <span class="id">innerPrev</span>
+        <span class="k">let</span> <span class="id">feed</span> <span class="o">=</span> <span class="id">lRes</span><span class="pn">.</span><span class="id">value</span>
+        <span class="k">let</span> <span class="id">innerState</span> <span class="o">=</span> <span class="id">lRes</span><span class="pn">.</span><span class="id">state</span>
+        <span class="pn">{</span> <span class="id">value</span> <span class="o">=</span> <span class="id">feed</span><span class="pn">.</span><span class="id">out</span><span class="pn">;</span> <span class="id">state</span> <span class="o">=</span> <span class="id">feed</span><span class="pn">.</span><span class="id">feedback</span><span class="pn">,</span><span onmouseout="hideTip(event, 'fs111', 701)" onmouseover="showTip(event, 'fs111', 701)" class="id">Some</span> <span class="id">innerState</span> <span class="pn">}</span>
+</code></pre>
+<p>The key here is that the user can specify a function that - with the help of the feedback operator <code>&lt;-&gt;</code> is evaluated and resulting in a <code>Block</code> itself. This block accumulates the user's feedback value as well as the state of the actual computation and packs (later unpacks) it together.</p>
+<h4>UseCase 1: Two Counter Alternatives</h4>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="c">// some simple blocks</span>
+<span class="k">let</span> <span class="id">counter</span> <span class="pn">(</span><span class="id">seed</span><span class="pn">:</span> <span onmouseout="hideTip(event, 'fs4', 702)" onmouseover="showTip(event, 'fs4', 702)" class="id">float</span><span class="pn">)</span> <span class="pn">(</span><span class="id">increment</span><span class="pn">:</span> <span onmouseout="hideTip(event, 'fs4', 703)" onmouseover="showTip(event, 'fs4', 703)" class="id">float</span><span class="pn">)</span> <span class="o">=</span>
+    <span onmouseout="hideTip(event, 'fs75', 704)" onmouseover="showTip(event, 'fs75', 704)" class="id">Block</span> <span class="o">&lt;|</span> <span class="k">fun</span> <span class="id">maybeState</span> <span class="k">-&gt;</span>
+        <span class="k">let</span> <span class="id">state</span> <span class="o">=</span> <span class="k">match</span> <span class="id">maybeState</span> <span class="k">with</span> <span class="pn">|</span> <span onmouseout="hideTip(event, 'fs110', 705)" onmouseover="showTip(event, 'fs110', 705)" class="id">None</span> <span class="k">-&gt;</span> <span class="id">seed</span> <span class="pn">|</span> <span onmouseout="hideTip(event, 'fs111', 706)" onmouseover="showTip(event, 'fs111', 706)" class="id">Some</span> <span class="id">v</span> <span class="k">-&gt;</span> <span class="id">v</span>
+        <span class="k">let</span> <span class="id">res</span> <span class="o">=</span> <span class="id">state</span> <span class="o">+</span> <span class="id">increment</span>
+        <span class="pn">{</span><span class="id">value</span><span class="o">=</span><span class="id">res</span><span class="pn">;</span> <span class="id">state</span><span class="o">=</span><span class="id">res</span><span class="pn">}</span>
+
+<span class="c">// we can rewrite &#39;counter&#39; by using feedback:</span>
+<span class="k">let</span> <span class="id">counterAlt</span> <span class="pn">(</span><span class="id">seed</span><span class="pn">:</span> <span onmouseout="hideTip(event, 'fs4', 707)" onmouseover="showTip(event, 'fs4', 707)" class="id">float</span><span class="pn">)</span> <span class="pn">(</span><span class="id">increment</span><span class="pn">:</span> <span onmouseout="hideTip(event, 'fs4', 708)" onmouseover="showTip(event, 'fs4', 708)" class="id">float</span><span class="pn">)</span> <span class="o">=</span>
+    <span class="id">seed</span> <span class="o">&lt;-&gt;</span> <span class="k">fun</span> <span class="id">state</span> <span class="k">-&gt;</span>
+        <span class="id">block</span> <span class="pn">{</span>
+            <span class="k">let</span> <span class="id">res</span> <span class="o">=</span> <span class="id">state</span> <span class="o">+</span> <span class="id">increment</span>
+            <span class="k">return</span> <span class="pn">{</span> <span class="id">out</span><span class="o">=</span><span class="id">res</span><span class="pn">;</span> <span class="id">feedback</span><span class="o">=</span><span class="id">res</span> <span class="pn">}</span>
+        <span class="pn">}</span>
+</code></pre>
+<p>Look in the sample for evaluating the counter functions.</p>
+<hint>All block functions can be rewritten using the feedback operator.</hint>
+<h4>UseCase 2: State in 'block { ... }' Syntax</h4>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="id">myFx</span> <span class="id">input</span> <span class="o">=</span>
+    <span class="id">block</span> <span class="pn">{</span>
+        <span class="c">// I would like to feed back the amped value</span>
+        <span class="c">// and access it in the next cycly</span>
+        <span class="c">// - but how?</span>
+        <span class="k">let</span> <span class="id">amped</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs9', 709)" onmouseover="showTip(event, 'fs9', 709)" class="id">amp</span> <span class="n">0.5</span> <span class="id">input</span> <span class="c">(* - (lastAmped * 0.1) *)</span>
+        <span class="k">let!</span> <span class="id">lp</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs112', 710)" onmouseover="showTip(event, 'fs112', 710)" class="id">lowPass</span> <span class="n">0.2</span> <span class="id">amped</span>
+        <span class="k">return</span> <span class="id">lp</span>
+    <span class="pn">}</span>
+
+<span class="k">let</span> <span class="id">myFxWithFeedback</span> <span class="id">input</span> <span class="o">=</span>
+    <span class="c">// initial value for lastAmped is: 0.0</span>
+    <span class="n">0.0</span> <span class="o">&lt;-&gt;</span> <span class="k">fun</span> <span class="id">lastAmped</span> <span class="k">-&gt;</span>
+        <span class="id">block</span> <span class="pn">{</span>
+            <span class="k">let</span> <span class="id">amped</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs9', 711)" onmouseover="showTip(event, 'fs9', 711)" class="id">amp</span> <span class="n">0.5</span> <span class="id">input</span> <span class="o">-</span> <span class="pn">(</span><span class="id">lastAmped</span> <span class="pn">*</span> <span class="n">0.1</span><span class="pn">)</span>
+            <span class="k">let!</span> <span class="id">lp</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs112', 712)" onmouseover="showTip(event, 'fs112', 712)" class="id">lowPass</span> <span class="n">0.2</span> <span class="id">amped</span>
+            <span class="c">// we emit our actual value (lp), and the feedback value (amped)</span>
+            <span class="k">return</span> <span class="pn">{</span> <span class="id">out</span><span class="o">=</span><span class="id">lp</span><span class="pn">;</span> <span class="id">feedback</span><span class="o">=</span><span class="id">amped</span> <span class="pn">}</span>
+        <span class="pn">}</span>
+</code></pre>
+<h3>III - Arithmetic operators</h3>
+<p>Sometimes, you want to make some arithmetic calculation from a block's result <em>directly</em>, and not use the identifier of the bound value:</p>
+<p>Instead of this...</p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="id">block</span> <span class="pn">{</span>
+    <span class="c">// we can add a Block and a float</span>
+    <span class="k">let!</span> <span class="id">cnt</span> <span class="o">=</span> <span class="pn">(</span><span class="id">counter</span> <span class="n">0.0</span> <span class="n">1.0</span><span class="pn">)</span>
+    <span class="k">let</span> <span class="id">cntPlus100</span> <span class="o">=</span> <span class="id">cnt</span> <span class="o">+</span> <span class="n">100.0</span>
+    <span class="c">// do some other things with cntPlus100...</span>
+    <span class="k">return</span> <span class="id">cnt</span>
+<span class="pn">}</span>
+</code></pre>
+<p>...you want to do this:</p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="id">block</span> <span class="pn">{</span>
+    <span class="c">// we can add a Block and a float</span>
+    <span class="k">let!</span> <span class="id">cnt</span> <span class="o">=</span> <span class="pn">(</span><span class="id">counter</span> <span class="n">0.0</span> <span class="n">1.0</span><span class="pn">)</span> <span class="o">+</span> <span class="n">100.0</span>
+    <span class="k">return</span> <span class="id">cnt</span>
+<span class="pn">}</span>
+</code></pre>
+<p>...or you even want to add 2 blocks directly:</p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="id">block</span> <span class="pn">{</span>
+    <span class="c">// we can add 2 Blocks</span>
+    <span class="k">let!</span> <span class="id">cnt</span> <span class="o">=</span> <span class="pn">(</span><span class="id">counter</span> <span class="n">0.0</span> <span class="n">1.0</span><span class="pn">)</span> <span class="o">+</span> <span class="pn">(</span><span class="id">counter</span> <span class="n">0.0</span> <span class="n">10.0</span><span class="pn">)</span>
+    <span class="k">return</span> <span class="id">cnt</span>
+<span class="pn">}</span>
+</code></pre>
+<p>This is possible with a little tricky mechanism incorporating F# "Statically Resolved Type Parameters", type extensions, and a Single Case Union. An explanation why and how this works is worth an article. Unfortunately, I cannot find the link to a presentation I once had, so please forgive me not referencing the author of this idea.</p>
+<p>Anyway, here is the code (as an example for <code>+</code>):</p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="k">type</span> <span class="id">ArithmeticExt</span> <span class="o">=</span> <span class="id">ArithmeticExt</span> <span class="k">with</span>
+    <span class="k">static</span> <span class="k">member</span> <span class="k">inline</span> <span class="pn">(</span><span class="o">?&lt;-</span><span class="pn">)</span> <span class="pn">(</span><span class="id">ArithmeticExt</span><span class="pn">,</span> <span class="id">a</span><span class="pn">:</span> <span onmouseout="hideTip(event, 'fs75', 713)" onmouseover="showTip(event, 'fs75', 713)" class="id">Block</span><span class="pn">&lt;</span><span class="id">&#39;</span><span class="id">v</span><span class="pn">,</span><span class="id">&#39;</span><span class="id">s</span><span class="pn">&gt;</span><span class="pn">,</span> <span class="id">b</span><span class="pn">)</span> <span class="o">=</span>
+        <span class="id">block</span> <span class="pn">{</span>
+            <span class="k">let!</span> <span class="id">aValue</span> <span class="o">=</span> <span class="id">a</span>
+            <span class="k">return</span> <span class="id">aValue</span> <span class="o">+</span> <span class="id">b</span>
+        <span class="pn">}</span>
+    <span class="k">static</span> <span class="k">member</span> <span class="k">inline</span> <span class="pn">(</span><span class="o">?&lt;-</span><span class="pn">)</span> <span class="pn">(</span><span class="id">ArithmeticExt</span><span class="pn">,</span> <span class="id">a</span><span class="pn">,</span> <span class="id">b</span><span class="pn">:</span> <span onmouseout="hideTip(event, 'fs75', 714)" onmouseover="showTip(event, 'fs75', 714)" class="id">Block</span><span class="pn">&lt;</span><span class="id">&#39;</span><span class="id">v</span><span class="pn">,</span><span class="id">&#39;</span><span class="id">s</span><span class="pn">&gt;</span><span class="pn">)</span> <span class="o">=</span>
+        <span class="id">block</span> <span class="pn">{</span>
+            <span class="k">let!</span> <span class="id">bValue</span> <span class="o">=</span> <span class="id">b</span>
+            <span class="k">return</span> <span class="id">a</span> <span class="o">+</span> <span class="id">bValue</span>
+        <span class="pn">}</span>
+    <span class="k">static</span> <span class="k">member</span> <span class="k">inline</span> <span class="pn">(</span><span class="o">?&lt;-</span><span class="pn">)</span> <span class="pn">(</span><span class="id">ArithmeticExt</span><span class="pn">,</span> <span class="id">a</span><span class="pn">:</span> <span onmouseout="hideTip(event, 'fs75', 715)" onmouseover="showTip(event, 'fs75', 715)" class="id">Block</span><span class="pn">&lt;</span><span class="id">&#39;</span><span class="id">v1</span><span class="pn">,</span><span class="id">&#39;</span><span class="id">s1</span><span class="pn">&gt;</span><span class="pn">,</span> <span class="id">b</span><span class="pn">:</span> <span onmouseout="hideTip(event, 'fs75', 716)" onmouseover="showTip(event, 'fs75', 716)" class="id">Block</span><span class="pn">&lt;</span><span class="id">&#39;</span><span class="id">v2</span><span class="pn">,</span><span class="id">&#39;</span><span class="id">s2</span><span class="pn">&gt;</span><span class="pn">)</span> <span class="o">=</span>
+        <span class="id">block</span> <span class="pn">{</span>
+            <span class="k">let!</span> <span class="id">aValue</span> <span class="o">=</span> <span class="id">a</span>
+            <span class="k">let!</span> <span class="id">bValue</span> <span class="o">=</span> <span class="id">b</span>
+            <span class="k">return</span> <span class="id">aValue</span> <span class="o">+</span> <span class="id">bValue</span>
+        <span class="pn">}</span>
+    <span class="k">static</span> <span class="k">member</span> <span class="k">inline</span> <span class="pn">(</span><span class="o">?&lt;-</span><span class="pn">)</span> <span class="pn">(</span><span class="id">ArithmeticExt</span><span class="pn">,</span> <span class="id">a</span><span class="pn">,</span> <span class="id">b</span><span class="pn">)</span> <span class="o">=</span> <span class="id">a</span> <span class="o">+</span> <span class="id">b</span>
+
+<span class="k">let</span> <span class="k">inline</span> <span class="pn">(</span><span class="o">+</span><span class="pn">)</span> <span class="id">a</span> <span class="id">b</span> <span class="o">=</span> <span class="pn">(</span><span class="o">?&lt;-</span><span class="pn">)</span> <span class="id">ArithmeticExt</span> <span class="id">a</span> <span class="id">b</span>
+</code></pre>
 
         <div class="tip" id="fs1">val amp : amount:float -&gt; input:float -&gt; float</div>
 <div class="tip" id="fs2">val amount : float</div>

@@ -16,7 +16,11 @@ let distort drive i =
 
 We can now visualize this function in a so-called **block diagram**:
 
-![Block diagram A](./Folie1.png)
+![Block diagram A](./bs_a.png)
+
+<hint>
+Note that in the block diagram, we assume all input parameters of a block as curried. The parameter order is from bottom to top.
+</hint>
 
 The `drive` parameter controls how much distortion we want: 1 means no distortion, the bigger the value gets means: a lot of distortion. We achieve this by a feeding the input into our amplifier. The output of the amp is then fed into a limiter. Let's call this technique of somposition **serial composition**.
 
@@ -62,8 +66,7 @@ Let's extend our sample in a way where the techniques of serial composition is n
 
 The distortion effect we just engineered sounds nice, and we want to be able to "blend it in" together with a low pass filtered version of the original signal. Low pass filter means: We want to get rid of the high frequencies and preserve only the low frequencies. And at the end, the whole result shall be faded in over a certain time and gained (amplified). Visualizing this in a block diagram is easy:
 
-TODO: Das Blockschaltbild anpassen mit fadeIn und gain
-![Block diagram B](./Folie3.png)
+![Block diagram B](./bs_b.png)
 
 Some things to note on the block diagram:
 
