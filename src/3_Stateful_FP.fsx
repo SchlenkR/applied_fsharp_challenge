@@ -15,7 +15,7 @@ let bind
         // state is a tuple of ('stateA * 'stateB)
         let previousStateOfCurrentBlock,previousStateOfNextBlock = previousStatePack
 
-        // The result of currentBlock is made up of an actual value and a state that
+        // We evaluate the currentBlock. It's result is made up of an actual value and a state that
         // has to be "recorded" by packing it together with the state of the
         // next block.
         let currentBlockOutput = (runB currentBlock) previousStateOfCurrentBlock

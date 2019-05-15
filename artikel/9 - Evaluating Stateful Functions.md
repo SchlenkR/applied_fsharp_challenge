@@ -65,9 +65,9 @@ This means we have to change the signature of our `Block` type:
 type Block<'value, 'state> = 'state option -> BlockOutput<'value, 'state>
 ```
 
-Instead of a `'state` parameter, a block expects an optional `'state` parameter.
+Instead of a `'state` parameter, a block expects an optional `'state option` parameter.
 
-Now, our `bind` function has to be adapter. Since `bind` is just a kind of relais between functions that has to unpack and forward a previousely packed state tuple, the modification is quite local and easy to understand:
+Now, our `bind` function has to be adapted. Since `bind` is just a kind of "relais" between functions that has to unpack and forward a previousely packed state tuple, the modification is quite local and easy to understand:
 
 ```fsharp
 let bind
@@ -89,15 +89,15 @@ let bind
         // both optional, but block who use it can deal with that.
 ```
 
-They key point here is that an incoming tuple of `('stateA * 'stateB) option` gets transformed to a tuple of `'stateA option * 'stateB option`. The two tuple elements can then be passed to thir corresponding `currentBlock` and `nextBlock` inside bind.
+They key point here is that an incoming tuple of `('stateA * 'stateB) option` gets transformed to a tuple of `'stateA option * 'stateB option`. The two tuple elements can then be passed to their corresponding `currentBlock` and `nextBlock` inside the bind function.
 
-The only thing that is missing is the adaption of the block functions themselves, namely "lowPass" and "fadeIn":
+The only thing that is missing is the adaption of the block functions themselves, namely `lowPass` and `fadeIn`:
 
 Since we assume that there is only 1 meaningful initial value for lowPass, we always want to default it to 0.0:
 
 ```fsharp
 let lowPass timeConstant input =
-    fun lastOut ->
+    Block <| fun lastOut ->
         let state = match lastOut with 
                     | None -> 0.0      // initial value hard coded to 0.0
                     | Some v -> v
@@ -110,8 +110,8 @@ let lowPass timeConstant input =
 For our fadeIn, we want the user to specify an initial value, since it might be that he doesn't want to fade from silence, but from half loudness:
 
 ```fsharp
-let fadeIn stepSize initial input =
-    fun lastValue ->
+let fadeIn stepSize initial (input: float) =
+    Block <| fun lastValue ->
         let state = match lastValue with 
                     | None -> initial      // initial value can be specified
                     | Some v -> v

@@ -1,5 +1,5 @@
 
-## Composing stateless processing functions
+## Composing Stateless Functions
 
 ### Serial Composition
 

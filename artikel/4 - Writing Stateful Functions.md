@@ -1,5 +1,5 @@
 
-## Writing Stateful Processing Functions
+## Writing Stateful Functions
 
 In the previous chapters, we wrote and composed pure (stateless) functions. This means that processing a signal (= a sequence of values) was made up of the following "recipe" (see chapter 1):
 

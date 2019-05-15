@@ -32,9 +32,10 @@ code:not([lang]) {
 }
 
 img {
-    max-width: 100%;
+    display: block;
+    margin: 10px auto;
+    max-width: 90%;
     height: auto;
-    width: auto\9; /* ie8 */
 }
 
 .container {

@@ -1,5 +1,5 @@
 
-## Writing Stateless Processing Functions
+## Writing Stateless Functions
 
 Since we now know what a signal is (value that changes over time), and that DSP it is an easy thing (dealing with sequences of values), and knowing that we are interested in functions that transform scalar inputs to scalar outputs, we start directly by writing a processing function. Later on, we will see how we can compose these small functions to a larger system.
 

@@ -98,7 +98,7 @@ Looking again at this block diagram:
 
 ![Block diagram B](./Folie3.png)
 
-There is one important thing to notice: Blocks themselves are not explicitly instanciated and then referenced by an identifier in the computation; they just sit in the place where they are used; they are kind of "inlined", even if they are based on their own local state.
+There is one important thing to notice: Blocks themselves are not explicitly instanciated and then referenced by an identifier in the computation; they just sit in the place where they are used; they are kind of "inlined", even if they carry their own local state.
 
 So it seems that in contrast to OOP, block diagrams work like this:
 
@@ -106,11 +106,11 @@ So it seems that in contrast to OOP, block diagrams work like this:
 
 This is also the case when composing pure functions, and this is what we want to achieve:
 
-**Finding a way of treating stateful functions as if they were pure functions!**
+<statement>Finding a way of treating stateful functions as if they were pure functions!</statement>
 
 How can we do that?
 
-We have to switch the way `references` are defined, from:
+We have to switch the way **references** are defined, from:
 
 > A reference is made up of a unique address in a global address space.
 
