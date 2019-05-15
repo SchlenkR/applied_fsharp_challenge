@@ -139,12 +139,16 @@ Assuming we have a sequence that produces random values (it's actually a list in
 let inputValues = [ 0.0; 0.2; 0.4; 0.6; 0.8; 1.0; 1.0; 1.0; 1.0; 1.0; 0.8; 0.6; 0.4; 0.2; 0.0 ]
 ```
 
+We can plot that sequence, too:
+
 ![Input Values](./inputValues.png)
 
 Now we want to apply out blendedDistortion function to the inputValues sequence.
 
 <hint>
-Note that a `seq` in F# corresponds to `IEnumerable` in .NET. This means that by just defining a sequence, no data is stored in memory until the sequence is evaluated (e.g. by iterating over it). A sequence can be infinite and can be viewed as a stream of values.
+
+Note that a `seq` in F# corresponds to `IEnumerable<T>` in .NET. This means that by just defining a sequence, data isn't necessarily persisted in memory - until the sequence is evaluated (e.g. by iterating over it). A sequence can be infinite and can be viewed as a stream of values.
+
 </hint>
 
 Now we need a mechanism for mapping over a sequence of input values to a sequence of output values. Before we write code, keep one thing in mind: At the end, we have to provide a callback to an audio backend. This callback is called multiple times. The purpose of the callback is to take an input sequence (in case of an effect) and produce an output sequence of values. Since the callback is called multiple times, it has to store it's state somewhere. Since the callback resides at the boundary of our functional system and the I/O world, we will store the latest state in a mutable variable that is captured by a closure. Have a look:
@@ -166,10 +170,12 @@ let createEvaluatorWithStateAndValues (blockWithInput: 'vIn -> Block<'vOut,'s>) 
 The `createEvaluatorWithStateAndValues` function takes itself a function. A single input value can be passed to that function, that evaluates to a block. That block can then be evaluated itself. It produces state that is assigned to the variable and the value that is yielded (together with the state) to our output sequence. This whole mechanism is wrapped in a function that takes an input array. This is the callback that could finally be passed to an audio backend. It can be evaluated multiple times, receiving the input buffer from the soundcard, maps it's values over with the given block function and outputs a sequence of values that is taken by the audio backend.
 
 <hint>
-In the following chapter TODO, we will analyze the results from our `blendedDistortion` effect. For now, we will just have a look on _how_ we can evaluate blocks against an input value sequence.
+
+In the next chapter, we will analyze the results from our `blendedDistortion` effect. For now, we will just have a look on **how** we can evaluate blocks against an input value sequence.
+
 </hint>
 
-Using the `createEvaluatorWithStateAndValues` function is quite forward:
+Using the `createEvaluatorWithStateAndValues` function is quite straight forward:
 
 ```fsharp
 let evaluateWithStateAndValues = blendedDistortion 1.5 |> createEvaluatorWithStateAndValues

@@ -1,7 +1,11 @@
 
+// -----------------------------------------------------------------------
 // IMPORTANT ***
+//
 // Please run "./.paket/paket.exe install" before executing the samples.
+//
 // IMPORTANT ***
+// -----------------------------------------------------------------------
 
 #load "chart_helper.fsx"
 open Chart_helper

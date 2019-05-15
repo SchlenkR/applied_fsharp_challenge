@@ -1,18 +1,21 @@
 
 statement {
     display: block;
-    padding: 5px;
+    padding: 10px;
     margin: 10px 0;
     border: 1px solid gray;
+    text-align: center;
     font-weight: bold;
+    font-size: 0.9em;
     background-color: lightgray;
 }
 
 hint {
     display: block;
-    padding: 5px;
+    padding: 10px;
     margin: 10px 0;
     font-style: italic;
+    font-size: 0.9em;
     text-align: center;
     background-color: lightcyan;
     color: darkslategray;

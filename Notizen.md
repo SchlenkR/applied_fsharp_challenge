@@ -144,3 +144,5 @@ Zum Schluss: Reduce benutzen als Runtime
 * Fazit
 * Die Codes im Artikel sind teilweise noch veraltet?
 * TODOs
+* About the author
+* 
