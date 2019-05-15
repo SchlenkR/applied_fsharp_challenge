@@ -1,35 +1,13 @@
 
-## Writing stateless processing functions
+## Writing Stateless Processing Functions
 
-### What we have learned so far
-
-TODO
-* Was Signale sind
-
-[von vorher: 
-    Transformation of Generator functions
-    Then: Apply these functions to every single value of a sequence.
-]
-
-TODO: Hier muss erklärt werden, was wir erreichen wollen. Also das Beispiel direkt mit Blockschaltbild usw. erklären, da man sonst nicht weiß, was das alles soll.
-
-[TODO: Kurzes Vorwort, was uns hier erwartet.] Please note that currently, we are not interested in the way 
-
-Let's start with something simple.
-
-* Gegeben ist immer ein Eingangssignal
-* Das wird angezeigt in Form einer Werteliste sowie eines Plots.
-* Blockschaltbild
-
-
-
-Knowing that we are so far interested in functions that transform scalar inputs to scalar outputs, we will have a look at some simple examples of processing functions. Later on, we will see how we can compose these small functions to a larger systems.
+Since we now know what a signal is (value that changes over time), and that DSP it is an easy thing (dealing with sequences of values), and knowing that we are interested in functions that transform scalar inputs to scalar outputs, start directly by writing a processing function. Later on, we will see how we can compose these small functions to a larger system.
 
 ### Amplifier
 
 Amplifying signals is a science for itself and one can spend a lot of money buying analog gear that sounds just "right" - where right is a subjective term based on user preferences. For us, a simple solution will be enough: Amplification of a signal in our context means: Scale values linearly. We can do that like this:
 
-[Bild: Signal vorher - nachher]
+![Before Amp - After Amp](./chart_input_and_amp.png)
 
 Linear scaling of a value is mathematically just a multiplication, so that is indeed very simple. This function does the job:
 
@@ -40,38 +18,9 @@ let amp amount input : float = input * amount
 
 TODO: Blockschaltbild machen
 
-<excurs data-name="Currying">
-We only write the "returning" type (float). The types of amount and i are infered. Can also write it with explicit types for all input params:
-
-```fsharp
-let amp (amount: float) (input: float) : float = input * amount
-```
-
-* We could also write it with inline. That's a powerful feature and works for all types having * defined. For now, we use explicit return types and implicit 
-
-Currying: Makes it simper
-```fsharp
-let amp amount : float = (*) amount
-```
-
-Currying is extremely important for us, and we will understand why when it comes to composing our functions.
-
-Again, we could leave out amount, having defined just an alias for the (*) function:
-```fsharp
-let amp = (*)
-```
-
-In the ongoing samples, we will use the first variant ```fsharp let amp amount input : float = input * amount ``` so that we have some meaningful names for our arguments (for multiplication, the order of arguments dowsn't matter, but there are a lot of other functions where precedence matters (TODO: wirklich precedence?)). SO let's stick with the first version.
-
-</excurs>
-
-TODO: Currying erklären mit Blockschaltbild und der Hintereinanderlegung der Parameter mit kleinen Kästen drumherum; Currying ist eine Art Factory für andere Funktionen.
-
-Sample: [in] -> [out] mit einfachen Werten
-
 ### Another example: Hard Limiter
 
-Now that we have our amplifier, we want to have the ability to "limit" a signal to a certain value. Again, there are a lot of ways to do this in a "nice" sounding way, but we will use a very simple technique that leads to a very harsh sounding distortion when the input signal gets limited. The limiter looks like this:
+Now that we have our amplifier, we want to have the ability to *limit* a signal to a certain value. Again, there are a lot of ways to do this in a "nice" sounding way, but we will use a very simple technique that leads to a very harsh sounding distortion when the input signal gets limited. The limiter looks like this:
 
 ```fsharp
 // float -> float -> float
@@ -81,26 +30,47 @@ let limit threshold input : float =
     else input
 ```
 
-TODO: Blockschaltbild; Currying
-
-Side Note: * Signale sind symmetrisch (schwingen um die Null-Linie). Das muss oft beachtet werden, wenn wir Algorithmen programmieren. 
-
-
-### Applying the processing functions
-
-TODO: Erklären: 
-    * We have an audio runtime. That runtime expects functions in the form of float -> float. Recipe:
-        * Input sequence
-        * processing function
-        * Seq
-    * Currently, we are not interested in applying our functions to get a result, this comes later. We focus on writing (and composing) processing / generator functions.
+<excurs data-name="Signatures">
+Note that in this case, we only write the "returning" type (float). The types of *amount* and *input* are infered, which means: The compiler understand which type they are just by looking at the way they are used. We can also write it with explicit types for all input params:
 
 ```fsharp
-[ 0.1; 0.2; 0.8; -0.2; -0.7 ] |> Seq.map (limit 0.5)
-// output: [0.1; 0.2; 0.5; -0.2; -0.5]
+let amp (amount: float) (input: float) : float = input * amount
 ```
 
-Test this in FSI!
+In the ongoing samples, we will use the first variant ```fsharp let amp amount input : float = input * amount ``` so that we have some meaningful names for our arguments (for multiplication, the order of arguments dowsn't matter, but there are a lot of other functions where precedence matters (TODO: wirklich precedence?)). SO let's stick with the first version.
+</excurs>
 
+<excurs data-name="Currying">
+Looking closely at the `amp` function, it gets clear that we simple wrapped the `*` function (multiplication of 2 floats). Since F# "curries" functions per default, we can re-write `amp`. If you want to have a deeper look into currying and the consequences it has, I recommend you have a look [here](https://fsharpforfunandprofit.com/posts/currying/).
 
-// TODO: Amp mit einem nicht linearen SKalierung machen, so dass das Beispiel nicht komplett trivial ist und wir erkennen können, dass es sich lohnt, diese Funktion zu schreiben. Diese "Übertragungskurve" dann noch zeichnen.
+In short, when the compiler curries a function, it means: It transforms one function with n parameters into n nested functions which each have one parameter.
+
+In the case of `amp`, it would look like this (manual currying now):
+
+```fsharp
+let amp (amount: float) =
+    fun (input: float) ->
+        input * amount
+```
+
+And indeed, both ways of writing `amp` result in the same signature: `float -> float -> float`.
+
+Since the F# compiler curries per default, we could now just leave out the last parameter - nothing would change:
+
+Currying makes it simper:
+
+```fsharp
+// (*) is now prefix style.
+let amp amount : float = (*) amount
+```
+
+And again, we could leave out amount, having defined just an alias for the (*) function:
+
+```fsharp
+let amp = (*)
+```
+
+Why is that important:
+
+Currying is in our case (and in a whole lot of other cases) extremely useful, because it enables us to recognize functions as a kind of "factory function" for inner functions: Applying the first parameter to a function results in another function with the rest of the parameters. This is important when it comes to composing our processing functions.
+</excurs>

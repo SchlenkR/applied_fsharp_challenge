@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (c) Microsoft Corporation.  All Rights Reserved.  See License.txt in the project root for license information. -->
+<PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011">
+  <Metadata>
+    <Identity Id="VisualFSharp" Version="15.8.20181029.1" Language="en-US" Publisher="Microsoft.VisualFSharpTools" />
+    <DisplayName>Visual F# Tools</DisplayName>
+    <Description xml:space="preserve">Deploy Visual F# Tools Binaries to Visual Studio</Description>
+    <PackageId>Microsoft.FSharp.VSIX.Full.Core</PackageId>
+    <MoreInfo>https://docs.microsoft.com/en-us/dotnet/articles/fsharp/</MoreInfo>
+  </Metadata>
+  <Installation Experimental="true">
+    <InstallationTarget Id="Microsoft.VisualStudio.Pro" Version="[15.0]" />
+  </Installation>
+  <Installer>
+    <Actions>
+      <Action Type="Ngen" Path="fsiAnyCpu.exe" />
+      <Action Type="Ngen" Path="fsi.exe" />
+      <Action Type="Ngen" Path="FSharp.Compiler.Private.dll" />
+      <Action Type="Ngen" Path="FSharp.Compiler.Interactive.Settings.dll" />
+      <Action Type="Ngen" Path="FSharp.Compiler.Server.Shared.dll" />
+      <Action Type="Ngen" Path="FSharp.Core.dll" />
+      <Action Type="Ngen" Path="FSharp.Editor.dll" />
+      <Action Type="Ngen" Path="FSharp.UIResources.dll" />
+      <Action Type="Ngen" Path="FSharp.LanguageService.Base.dll" />
+      <Action Type="Ngen" Path="FSharp.LanguageService.dll" />
+      <Action Type="Ngen" Path="FSharp.ProjectSystem.Base.dll" />
+      <Action Type="Ngen" Path="FSharp.ProjectSystem.FSharp.dll" />
+      <Action Type="Ngen" Path="FSharp.ProjectSystem.PropertyPages.dll" />
+      <Action Type="Ngen" Path="FSharp.VS.FSI.dll" />
+    </Actions>
+  </Installer>
+  <Dependencies>
+    <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" Version="[4.6,)" />
+  </Dependencies>
+  <Assets>
+    <Asset Type="Microsoft.VisualStudio.VsPackage" Path="RegisterFsharpPackage.pkgdef" />
+    <Asset Type="Microsoft.VisualStudio.VsPackage" Path="FSharp.ProjectSystem.FSharp.pkgdef" />
+    <Asset Type="Microsoft.VisualStudio.VsPackage" Path="FSharp.ProjectSystem.Base.pkgdef" />
+    <Asset Type="Microsoft.VisualStudio.VsPackage" Path="FSharp.VS.FSI.pkgdef" />
+    <Asset Type="Microsoft.VisualStudio.VsPackage" Path="FSharp.LanguageService.Base.pkgdef" />
+    <Asset Type="Microsoft.VisualStudio.VsPackage" Path="FSharp.LanguageService.pkgdef" />
+    <Asset Type="Microsoft.VisualStudio.VsPackage" Path="FSharp.Editor.pkgdef" />
+    <Asset Type="Microsoft.VisualStudio.VsPackage" Path="FSharp.ProjectSystem.PropertyPages.pkgdef" />
+    <Asset Type="Microsoft.VisualStudio.VsPackage" Path="FSharp.Compiler.Server.Shared.pkgdef" />
+    <Asset Type="Microsoft.VisualStudio.MefComponent" Path="FSharp.Editor.dll" />
+    <Asset Type="Microsoft.VisualStudio.Analyzer" Path="FSharp.Editor.dll" />
+    <Asset Type="Microsoft.VisualStudio.MefComponent" Path="FSharp.ProjectSystem.Base.dll" />
+    <Asset Type="Microsoft.VisualStudio.ItemTemplate" Path="ItemTemplates" />
+  </Assets>
+  <Prerequisites>
+    <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[15.0,16.0)" DisplayName="Visual Studio core editor" />
+  </Prerequisites>
+</PackageManifest>
