@@ -39,7 +39,7 @@ let generate() =
         includeSource = true)
 
   Array.concat [
-      Directory.GetFiles(sourceDir, "*.tif")
+      // Directory.GetFiles(sourceDir, "*.tif")
       Directory.GetFiles(sourceDir, "*.png")
   ]
   |> Seq.map FileInfo

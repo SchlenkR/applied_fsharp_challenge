@@ -3,11 +3,11 @@
 
 First, let's look again at the block diagram that defines a stateful function:
 
-![Block with state](./block_with_state.tif)
+![Block with state](./block_with_state.png)
 
 Notice that the feedback of state is the key point: How can that be achieved? To find an answer, let's just ignore it for a moment. We assume that there will be something that can handle this issue for us. What remains is a function with "state in" and "state out" beside the actual in and out values:
 
-![block_with_state_no_feedback](./block_with_state_no_feedback.tif)
+![block_with_state_no_feedback](./block_with_state_no_feedback.png)
 
 Assuming that some mechsnism passes in previous state and records output state (that gets passed in as previous state at the next evaluation, and so on), we can rewrite the object oriented low pass filter code from (TODO: Chapter 4) by transforming it to a pure function:
 

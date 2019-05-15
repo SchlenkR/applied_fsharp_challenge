@@ -4,7 +4,7 @@
 
 packages\FSharp.Compiler.Tools\tools\fsi.exe --load:genHtml.fsx --exec || goto :error
 
-cmd /c _htmlOutput\article.html
+start _htmlOutput\article.html
 exit
 
 :error
