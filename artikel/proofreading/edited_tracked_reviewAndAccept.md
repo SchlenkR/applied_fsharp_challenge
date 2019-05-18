@@ -50,6 +50,7 @@ Here, I have captured a sine wave with the _amplitude_ of 0.5 and a frequency of
 Given that I have a sample rate of 16Hz, I can just a value sequence instead of a time-value sequence:
 
 ```fsharp
+[ 0.0; 0.4047782464; 0.4752436455; 0.1531976936; -0.2953766911; -0.499994728; (*and so on *) ]
 ```
 
 The point in time of the the n-th value in the sequence can easily be calculated when sample rate and starting time are given. This fact is fundamental and leads to a definition of what _processing_ means:
@@ -137,6 +138,8 @@ Amplifying signals is a science in itself. You could spend a lot of money buying
 Linear scaling of a value is mathematically just a multiplication, so that is indeed very simple. This function does the job:
 
 ```fsharp
+// float -> float -> float
+let amp amount input : float = input * amount
 ```
 
 ### Another Example: Hard Limiter
@@ -144,6 +147,11 @@ Linear scaling of a value is mathematically just a multiplication, so that is in
 Now that we have our amplifier, we want to have the ability to _limit_ a signal to a certain boundary. Again, there are a lot of ways to do this in a "nice" sounding way, but we will use a very simple technique that leads to a very harsh sounding distortion when the input signal gets limited. The limiter looks like this:
 
 ```fsharp
+// float -> float -> float
+let limit threshold input : float =
+    if input > threshold then threshold
+    else if input < -threshold then -threshold
+    else input
 ```
 
 <excurs data-name="Types and Signatures">
@@ -151,6 +159,7 @@ Now that we have our amplifier, we want to have the ability to _limit_ a signal 
 Note that in this case, we only write the resulting type (float). The types of `amount` and `input` are inferred, which means the compiler understands which type they are just by looking at the way they are used. We can also write it with explicit types for all input parameters:
 
 ```fsharp
+let amp (amount: float) (input: float) : float = input * amount
 ```
 
 In the next samples, we will use the first variant so that we have some meaningful names for our parameters.
@@ -166,6 +175,9 @@ In short, when the compiler curries a function, it transforms one function with 
 In the case of `amp`, it would look like this (manual currying now):
 
 ```fsharp
+let amp (amount: float) =
+    fun (input: float) ->
+        input * amount
 ```
 
 And indeed, both ways of writing `amp` result in the same signature: `float -> float -> float`.
@@ -175,11 +187,14 @@ Since the F# compiler curries by default, we could now just leave out the last p
 Currying makes it simpler:
 
 ```fsharp
+// (*) is now prefix style.
+let amp amount : float = (*) amount
 ```
 
 Again, we could leave out amount, having defined just an alias for the (*) function:
 
 ```fsharp
+let amp = (*)
 ```
 
 **Why is that important?**
@@ -200,6 +215,10 @@ The `amp` and `limit` functions are so small that we won't break them into small
 Let's say we want to build a nice distortion effect that is defined in this way:
 
 ```fsharp
+let distort drive i =
+    let amplified = amp drive i
+    let limited = limit 1.0 amplified
+    limited
 ```
 
 We can now visualize this function in a so-called **block diagram**:
@@ -217,6 +236,11 @@ The `drive` parameter controls how much distortion we want: 1 means no distortio
 We use an explicit identifier (`amplified`, `result`) and evaluate our amp and limit functions. This can be a useful technique, e.g., when we want to reuse the `amplified` value in a more complex scenario (which we will see shortly). For serial composition, we can use alternatives to make our code more "compact":
 
 ```fsharp
+let distort1 drive input = limit 1.0 (amp drive input)
+
+let distort2 drive input = amp drive input |> limit 1.0
+
+let distort3 drive = amp drive >> limit 1.0
 ```
 
 1. **Inline the expressions**
@@ -263,6 +287,14 @@ Now we will look at a technique whereby we can translate this behavior to F# cod
 As usual, there are a lot of ways to achieve this. I recommend taking some time and thinking about how this could be done. In our sample, we bind meaningful values to identifiers:
 
 ```fsharp
+let blendedDistortion drive input =
+    let amped = input |> amp drive
+    let hardLimited = amped |> limit 0.7
+    let softLimited = amped |> lowPass 0.2
+    let mixed = mix 0.5 hardLimited softLimited
+    let fadedIn = mixed |> fadeIn 0.1
+    let gained = amp 0.5 fadedIn
+    gained
 ```
 
 By introducing the "amped" identifier, we are able to use its value in more than one place in the rest of our computation. Merging is nothing more than feeding evaluated branches into an appropriate function. Of course, there are other ways of writing this code.
@@ -272,16 +304,52 @@ By introducing the "amped" identifier, we are able to use its value in more than
 Let's focus on `hardLimited,` `softLimited` and `mixed`:
 
 ```fsharp
+let blendedDistortion_Alt1 drive input =
+    let amped = input |> amp drive
+    let mixed =
+        mix 0.5 
+            (amped |> limit 0.7)
+            (amped |> lowPass 0.2)
+    let fadedIn = mixed |> fadeIn 0.1
+    let gained = amp 0.5 fadedIn
+    gained
 ```
 
 In this code sample, we didn't use identifiers, but passed the two branches directly to the mix function as arguments.
 
 ```fsharp
+let blendedDistortion_Alt2 drive input =
+    let amped = input |> amp drive
+    let mixed =
+        (
+            amped |> limit 0.7,       // a: First branch: hardLimited
+            amped |> lowPass 0.2      // b: Second Branch: softLimited
+        )
+        ||> mix 0.5
+    let fadedIn = mixed |> fadeIn 0.1
+    let gained = amp 0.5 fadedIn
+    gained
 ```
 
 There is also the `||>` operator: it takes a tuple (in our case, the two branches) and feeds it into a two-curried parameter function (in our case, `mix 0.5` evaluates to a two-parameter function).
 
 ```fsharp
+// ALt. 2: right-to-left pipe forward operator
+// Non idiomativ F#
+
+let inline ( ^|> ) x f = f x 
+
+let blendedDistortion_Alt3 drive input =
+    let amped = input |> amp drive
+    let mixed =
+        (
+            (amped |> lowPass 0.2)     // b: Second Branch: softLimited
+            ^|> (amped |> limit 0.7)   // a: First branch: hardLimited
+            ^|> mix 0.5
+        )
+    let fadedIn = mixed |> fadeIn 0.1
+    let gained = amp 0.5 fadedIn
+    gained
 ```
 
 There is also the possibility of defining an own operator: using the `^` symbol before an operator makes the operator have a right associativity. This means that evaluation is not from left to right, but from right to left. In our case, the `mix 0.5` function is evaluated to a two-parameter function. Branch `b` is passed to that function (a one-parameter function remains), and then branch 'a' is passed to it. Note that (even for `mix,` it wouldn't matter) we have to switch the order of arguments (first b, then a) to achieve the same order as in the previous samples.
@@ -289,6 +357,15 @@ There is also the possibility of defining an own operator: using the `^` symbol 
 You can even test our operator on your own:
 
 ```fsharp
+let mix4 a b c d = sprintf "%A %A %A %A" a b c d
+
+1.0
+^|> 2.0
+^|> 3.0
+^|> 4.0
+^|> mix4
+
+// evaluates to: "4.0 3.0 2.0 1.0"
 ```
 
 Note that is not an idiomatic F# way, and I won't use it in the upcoming code samples.
@@ -300,11 +377,13 @@ Note that is not an idiomatic F# way, and I won't use it in the upcoming code sa
 Note that for now, we do not have a working low pass filter implementation, so we just use a placeholder function that works like a normal stateless processing function of type `float -> float`:
 
 ```fsharp
+let lowPass frq input : float = input // just a dummy - for now...
 ```
 
 The same is for fadeIn:
 
 ```fsharp
+let fadeIn stepSize input : float = input // just a dummy - for now...
 ```
 
 #### A Note on "mix":
@@ -314,11 +393,15 @@ We need a "mix" function that has a `abRatio` parameter to control the amount of
 The function is this:
 
 ```fsharp
+let mix abRatio a b : float = a * abRatio + b * (1.0 - abRatio)
 ```
 
 You can test it with:
 
 ```fsharp
+mix 0.0 0.3 0.8 = 0.3  // true
+mix 0.5 0.3 0.8 = 0.55 // true
+mix 1.0 0.3 0.8 = 0.8  // true
 ```
 
 
@@ -427,6 +510,12 @@ The upcoming OOP samples use non-class techniques with functions as objects and 
 Here is the implementation of the low pass in F# with OOP techniques:
 
 ```fsharp
+let lowPassCtor() =
+    let mutable lastOut = 0.0
+    fun timeConstant input ->
+        let diff = lastOut - input
+        lastOut <- lastOut - diff * timeConstant
+        lastOut
 ```
 
 What we have here:
@@ -438,6 +527,12 @@ What we have here:
 The same is for `fadeIn`:
 
 ```fsharp
+let fadeInCtor() =
+    let mutable lastValue = 0.0
+    fun stepSize input ->
+        let result = input * lastValue
+        lastValue <- min (lastValue + stepSize) 1.0
+        result
 ```
 
 #### Usage
@@ -445,6 +540,15 @@ The same is for `fadeIn`:
 In the previous chapter, we have already seen how we _would like_ to use the low pass filter: Like a pure function. Here is again how:
 
 ```fsharp
+// that compiles, but doesn't work.    
+let blendedDistortion drive input =
+    let amped = input |> amp drive
+    let hardLimited = amped |> limit 0.7
+    let softLimited = amped |> (lowPassCtor()) 0.2      // we would like to use lowPassCtor
+    let mixed = mix 0.5 hardLimited softLimited
+    let fadedIn = mixed |> (fadeInCtor()) 0.1           // we would like to use fadeInCtor
+    let gained = amp 0.5 fadedIn
+    gained
 ```
 
 But this won't work anymore. We cannot just insert `lowPassCtor` in a pure computation. But why not, since the compiler allows that? Answer: The `blendedDistortion` function itself is pure: when it is evaluated multiple times, it always creates a "new" lowPass by calling the lowPassCtor function, with lowPass's mutable `lastOut` field set to `0.0`. It would never calculate anything useful.
@@ -452,6 +556,20 @@ But this won't work anymore. We cannot just insert `lowPassCtor` in a pure compu
 This issue can be solved by creating `lowPass` and `fadeIn` instances up front and capturing that reference in a closure. In doing so, we have to change our `blendedDistortion` processing function to a factory function (analog to the `lowPassCtor`):
 
 ```fsharp
+let blendedDistortionCtor() =
+
+    // create and hold references to stateful objects
+    let lowPassInstance = lowPassCtor()
+    let fadeInInstance = fadeInCtor()
+
+    fun drive input ->
+        let amped = input |> amp drive
+        let hardLimited = amped |> limit 0.7
+        let softLimited = amped |> lowPassInstance = 0.2
+        let mixed = mix 0.5 hardLimited softLimited
+        let fadedIn = mixed |> fadeInInstance 0.1
+        let gained = amp 0.5 fadedIn
+        gained
 ```
 
 That works! But: It's a burden for the user. Every time a stateful function is needed, it has to be declared before it can be used inside of the computation, and the instance has to be removed when it is not needed anymore. When authoring more complex effects or synthesizers, this can be a major pain. The user's focus is modeling a DSP computation and not instance management. Since instance management is something that has to be done, it draws away attention from the primary goal and interrupts the workflow of the programmer.
@@ -502,6 +620,14 @@ Notice that the feedback of state is the key point: how can that be achieved? To
 Assuming that some mechanism passes in previous state and records output state (that gets passed in as the previous state at the next evaluation, and so on), we can rewrite the object-oriented low pass filter code by transforming it to a pure function:
 
 ```fsharp
+// float -> float -> float -> float * float
+let lowPass timeConstant (input: float) =
+    fun lastOut ->
+        let diff = lastOut - input
+        let out = lastOut - diff * timeConstant
+        // the output state **is in this case** equals the output value
+        let newState = out
+        (newState,out)
 ```
 
 What have we done?
@@ -525,6 +651,7 @@ Like stateless functions, we want to compose many stateful functions to build hi
 Since ``` 'state * float ``` tuple is a significant thing that we will need more often, let's transform it to a named record type:
 
 ```fsharp
+type BlockOutput<'state> = { value: float; state: 'state }
 ```
 
 Then the signature of our stateful functions looks like this:
@@ -533,6 +660,7 @@ Then the signature of our stateful functions looks like this:
 Let's name that function, too:
 
 ```fsharp
+type Block<'state> = Block of ('state -> BlockOutput<'state>)
 ```
 
 The `Block` type is a so-called **single case discriminated union**. I suggest you read [this](https://fsharpforfunandprofit.com/posts/designing-with-types-single-case-dus/) to understand how to construct and deconstruct unions, but you can try to figure it out by looking at the modified low pass filter code.
@@ -542,11 +670,24 @@ Compared to type abbreviations, single case unions have the advantage that it ha
 The lowPass and fadeIn functions look like this (the resulting functions are simply passed to the `Block` constructor):
 
 ```fsharp
+let lowPass timeConstant input =
+    Block <| fun lastOut ->
+        let diff = lastOut - input
+        let out = lastOut - diff * timeConstant
+        let newState = out
+        { value = out; state = newState }
+
+let fadeIn stepSize input =
+    Block <| fun lastValue ->
+        let result = input * lastValue
+        let newState = min (lastValue + stepSize) 1.0
+        { value = result; state = newState }
 ```
 
 To be able to use a previously constructed single case union, we need a function that "unpacks" the inner value:
 
 ```fsharp
+let runB block = let (Block b) = block in b
 ```
 
 We will see shortly how `runB` is used.
@@ -556,6 +697,9 @@ We will see shortly how `runB` is used.
 Since we might have signal values that are not always of type `float`, we can easily generalize the `float`, so that our types look like this:
 
 ```fsharp
+type BlockOutput<'value, 'state> = { value: 'value; state: 'state }
+
+type Block<'value, 'state> = 'state -> BlockOutput<'value, 'state>
 ```
 
 The code for `lowPass` and `fadeIn` remain the same because the compiler infers `float`.
@@ -590,6 +734,31 @@ The final state pack that is emitted from the whole computation (alongside with 
 Since this article is all about synthesizers, let's synthesize a composition function according to this recipe. We call it `bind`:
 
 ```fsharp
+let bind
+        (currentBlock: Block<'valueA, 'stateA>)
+        (rest: 'valueA -> Block<'valueB, 'stateB>)
+        : Block<'valueB, 'stateA * 'stateB> =
+    Block <| fun previousStatePack ->
+
+        // Deconstruct state pack:
+        // state is a tuple of ('stateA * 'stateB)
+        let previousStateOfCurrentBlock,previousStateOfNextBlock = previousStatePack
+
+        // We evaluate the currentBlock. It's result is made up of an actual value and a state that
+        // has to be "recorded" by packing it together with the state of the
+        // next block.
+        let currentBlockOutput = (runB currentBlock) previousStateOfCurrentBlock
+
+        // Continue evaluating the computation:
+        // passing the actual output value of currentBlock to the rest of the computation
+        // gives us access to the next block in the computation:
+        let nextBlock = rest currentBlockOutput.value
+
+        // Evaluate the next block and build up the result of this bind function
+        // as a block, so that it can be used as a bindable element itself -
+        // but this time with state of 2 blocks packed together.
+        let nextBlockOutput = (runB nextBlock) previousStateOfNextBlock
+        { value = nextBlockOutput.value; state = currentBlockOutput.state, nextBlockOutput.state }
 ```
 
 You can read the code comments that explain the step. In addition, there are some more insights:
@@ -612,6 +781,15 @@ Having this in mind, we can modify our use case example "blendedDistortion" in w
 Here it is in the desired form:
 
 ```fsharp
+// that would be nice, but doesn't work.
+let blendedDistortion drive input =
+    let amped = input |> amp drive
+    let hardLimited = amped |> limit 0.7
+    let softLimited = amped |> lowPass 0.2      // we would like to use lowPass
+    let mixed = mix 0.5 hardLimited softLimited
+    let fadedIn = mixed |> fadeIn 0.1           // we would like to use fadeIn
+    let gained = amp 0.5 fadedIn
+    gained
 ```
 
 Here, we treat lowPass and fadeIn as pure functions - which is what we wanted - but which also does not work. We then use OOP that solves the issue, but forces us to create and manage references to instances.
@@ -644,6 +822,14 @@ In this chapter, we will modify our `blendedDistortion` sample to achieve the fo
 Let's start with breaking the computation into pieces every time a `Block` is used and composing these pieces with `bind`:
 
 ```fsharp
+let blendedDistortion1 drive input =
+    let amped = input |> amp drive
+    let hardLimited = amped |> limit 0.7
+    bind (amped |> lowPass 0.2) (fun softLimited ->
+        let mixed = mix 0.5 hardLimited softLimited
+        bind (mixed |> fadeIn 0.1) (fun fadedIn ->
+            let gained = amp 0.5 fadedIn
+            gained))
 ```
 
 **Indent**
@@ -651,6 +837,14 @@ Let's start with breaking the computation into pieces every time a `Block` is us
 That does not look like the desired result (and it wouldn't compile - but let's set that aside for a moment). But with a little bit of tweaking indentation, we can make it look a little more readable:
 
 ```fsharp
+let blendedDistortion2 drive input =
+    let amped = input |> amp drive
+    let hardLimited = amped |> limit 0.7
+    bind (amped |> lowPass 0.2) (fun softLimited ->
+    let mixed = mix 0.5 hardLimited softLimited
+    bind (mixed |> fadeIn 0.1) (fun fadedIn ->
+    let gained = amp 0.5 fadedIn
+    gained))
 ```
 
 That's better! Now compare this code with the desired code from:
@@ -664,11 +858,20 @@ Every time we use a lowPass or fadeIn, there's no let binding anymore, but rathe
 We can then introduce a prefix style operator as an alias for bind:
 
 ```fsharp
+let (>>=) = bind
 ```
 
 ...and remove the parenthesis:
 
 ```fsharp
+let blendedDistortion3 drive input =
+    let amped = input |> amp drive
+    let hardLimited = amped |> limit 0.7
+    (amped |> lowPass 0.2) >>= fun softLimited ->
+    let mixed = mix 0.5 hardLimited softLimited
+    (mixed |> fadeIn 0.1) >>= fun fadedIn ->
+    let gained = amp 0.5 fadedIn
+    gained
 ```
 
 Now we are pretty close to the desired code, except that the identifiers of the lambdas are coming after the expression. But we will get rid of that, too, in a minute.
@@ -678,11 +881,23 @@ Now we are pretty close to the desired code, except that the identifiers of the 
 There is one thing to notice here: the code wouldn't compile. Remember that we defined bind in a way that it gets past the "rest of the computation" as a function that evaluates to a `Block`? Look at the last expression: it evaluates to a float, not to a `Block`. Why? The answer is easy: it has no state because the "mix" function is a stateless function. Thus, it evaluates to a pure float value and not to a Block. Solving this is easy, because we can turn a float value into a ```Block<float, unit>``` like this:
 
 ```fsharp
+// "Return" function of: 'a -> Block<'a, Unit>
+let returnB x =
+    let blockFunction unusedState = { value = x; state = () }
+    Block blockFunction
 ```
 
 The whole `blendedDistortion` function then looks like this:
 
 ```fsharp
+let blendedDistortion3 drive input =
+    let amped = input |> amp drive
+    let hardLimited = amped |> limit 0.7
+    (amped |> lowPass 0.2) >>= fun softLimited ->
+    let mixed = mix 0.5 hardLimited softLimited
+    (mixed |> fadeIn 0.1) >>= fun fadedIn ->
+    let gained = amp 0.5 fadedIn
+    returnB gained
 ```
 
 ### Using F# Language Support for Bind and Return
@@ -692,9 +907,22 @@ The syntax with our lambdas is close to the desired syntax, but we can get even 
 All we have to do is implement a class - which is called "builder" - that has a predefined set of methods. Here, we use a minimal set to enable the F# syntax support for bind. Note that in a real-world scenario, there are many more builder methods available that serve different needs, although we won't capture them here.
 
 ```fsharp
+type Patch() =
+    member this.Bind(block, rest) = bind block rest
+    member this.Return(x) = returnB x
+let patch = Patch()
 ```
 
 ```fsharp
+let blendedDistortion drive input = patch {
+    let amped = input |> amp drive
+    let hardLimited = amped |> limit 0.7
+    let! softLimited = amped |> lowPass 0.2
+    let mixed = mix 0.5 hardLimited softLimited
+    let! fadedIn = mixed |> fadeIn 0.1
+    let gained = amp 0.5 fadedIn
+    return gained
+}
 ```
 
 This looks almost similar to what we wanted to achieve. We only have to wrap our code in the "patch" and use let! instead of let every time we deal with blocks instead of pure functions. The F# compiler translates this syntax into the form we have seen above.
@@ -719,6 +947,8 @@ But in the end, we are not interested in state - we need the pure output values 
 Having a look at the final `blendedDistortion` function again, there is an interesting aspect about the signature of its state:
 
 ```fsharp
+// float -> float -> Block<float, float * (float * unit)>
+let blendedDistortion drive input = patch { (*...*) }
 ```
 
 The first two floats are "drive" and "input". After applying these, we get a `Block` that deals with float signal values. Its state signature is then `float * (float * unit)`.
@@ -728,6 +958,14 @@ Where does this come from?
 This is the nested tuple that is completely inferred from the structure of the `blendedDistortion` computation expression:
 
 ```fsharp
+let blendedDistortion drive input = patch {
+    let amped = input |> amp drive
+    let hardLimited = amped |> limit 0.7
+    let! softLimited = amped |> lowPass 0.2       // lowPass has float as state
+    let mixed = mix 0.5 hardLimited softLimited
+    let! fadedIn = mixed |> fadeIn 0.1            // fadeIn has float as state
+    let gained = amp 0.5 fadedIn
+    return gained                                 // return (which is returnB) has unit as state
 ```
 
 The F# compiler understands how the state of the whole computation has to look like just by "looking" at how the computation is defined. There is no explicit type annotation needed that would be given by the user (that would be a show stopper). It is all inferred for the user by the F# compiler.
@@ -735,11 +973,17 @@ The F# compiler understands how the state of the whole computation has to look l
 But our goal was to evaluate the computation for a given set of input values. To achieve that, we have to evaluate the `Block` function that we get from blendedDistortion. Let's have a look at the `Block` type again:
 
 ```fsharp
+type Block<'value, 'state> = 'state -> BlockOutput<'value, 'state>
 ```
 
 A `Block` needs (of course) state - the previous state - passed in to be able to evaluate its next state and value. At the beginning of an evaluation cycle, what's the previous state? There is none, so we need an initial state in form of `float * (float * unit)`.
 
 ```fsharp
+    // we have to create some initial state to kick off the computation.
+    let initialState = 0.0, (0.0, ())
+    
+    // for simplification, we pass in constant drive and input values to blendedDistortion.
+    let result = blendedDistortion 1.5 0.5 initialState
 ```
 
 The fact that we have to write initial state for a computation seems kind of annoying. Now imagine you are in a real-world scenario in which you reuse `Block` in `Block`, building more and more high-level blocks. And another thing: you might not even know what is an appropriate initial value for blocks you didn't write. Thus, providing initial values might be your concern, but it could also be the concern of another author. What we need is a mechanism that enables us to:
@@ -755,6 +999,7 @@ We can achieve this by making state optional. In that case, the block author can
 This means we have to change the signature of our `Block` type:
 
 ```fsharp 
+type Block<'value, 'state> = 'state option -> BlockOutput<'value, 'state>
 ```
 
 Instead of a `'state` parameter, a `Block` expects an optional `'state option` parameter.
@@ -762,6 +1007,23 @@ Instead of a `'state` parameter, a `Block` expects an optional `'state option` p
 Now our `bind` function has to be adapted. Since `bind` is just a kind of "relay" between functions that unpacks and forwards a previously packed state tuple, the modification is quite local and easy to understand:
 
 ```fsharp
+let bind
+        (currentBlock: Block<'valueA, 'stateA>)
+        (rest: 'valueA -> Block<'valueB, 'stateB>)
+        : Block<'valueB, 'stateA * 'stateB> =
+    fun previousStatePack ->
+
+        // Deconstruct state pack:
+        // state is a tuple of: ('stateA * 'stateB) option
+        // that gets transformed to: 'stateA option * 'stateB option
+        let previousStateOfCurrentBlock,previousStateOfNextBlock =
+            match previousStatePack with
+            | None -> None,None
+            | Some (stateA,stateB) -> Some stateA, Some stateB
+
+        // no modifications from here:
+        // previousStateOfCurrentBlock and previousStateOfNextBlock are now
+        // both optional, but block who use it can deal with that.
 ```
 
 The key point here is that an incoming tuple of `('stateA * 'stateB) option` gets transformed to a tuple of `'stateA option * 'stateB option`. The two tuple elements can then be passed to their corresponding `currentBlock` and `nextBlock` inside the bind function.
@@ -771,11 +1033,28 @@ The only thing that is missing is the adaption of the `Block` functions themselv
 For `lowPass`, we assume that there is only one meaningful initial value that we always want to default to 0.0:
 
 ```fsharp
+let lowPass timeConstant input =
+    Block <| fun lastOut ->
+        let state = match lastOut with 
+                    | None -> 0.0      // initial value hard coded to 0.0
+                    | Some v -> v
+        let diff = state - input
+        let out = state - diff * timeConstant
+        let newState = out
+        { value = out; state = newState }
 ```
 
 For our `fadeIn`, we want the user to specify an initial value, since it might be that he or she does not want to fade from silence, but from half loudness:
 
 ```fsharp
+let fadeIn stepSize initial (input: float) =
+    Block <| fun lastValue ->
+        let state = match lastValue with 
+                    | None -> initial      // initial value can be specified
+                    | Some v -> v
+        let result = input * state
+        let newState = min (state + stepSize) 1.0
+        { value = result; state = newState }
 ```
 
 Now we have reached our goal. We can pass initial values in places in which they are needed and omit them when the author wants to specify them on his or her own.
@@ -783,6 +1062,8 @@ Now we have reached our goal. We can pass initial values in places in which they
 So finally, we can just pass in `None` as the initial state, so that code looks like this:
 
 ```fsharp
+// for simplification, we pass in constant drive and input values to blendedDistortion.
+let result = blendedDistortion 1.5 0.5 None
 ```
 
 ### Sequential Evaluation
@@ -792,6 +1073,7 @@ In the code above, we evaluates a `Block` one time. This gives one `BlockResult`
 Assuming we have a sequence that produces random values (here it's actually a list in F#, but it does not necessarily have to be a list; a sequence of values would be sufficient):
 
 ```fsharp
+let inputValues = [ 0.0; 0.2; 0.4; 0.6; 0.8; 1.0; 1.0; 1.0; 1.0; 1.0; 0.8; 0.6; 0.4; 0.2; 0.0 ]
 ```
 
 We can plot that sequence, too:
@@ -809,6 +1091,17 @@ Note that a `seq<'a>` in F# corresponds to `IEnumerable<T>` in C#/.NET. This mea
 Now we need a mechanism for mapping over a sequence of input values to a sequence of output values. Before we write code, keep one thing in mind: at the end, we have to provide some kind of callback to an audio backend. This callback (as function pointer) is usually held by the audio backend and called multiple times when new data is needed. The purpose of the callback is to take an input array of values (in case of an effect) and produce an output array of values (usually, its indeed arrays). Since the callback is called multiple times, it has to store its state somewhere. Since the callback resides at the boundary of our functional system and the I/O world, we will store the latest state in a mutable variable that is captured by a closure (so you see that F# is not a "pure" functional language, but this can be an advantage and simplify work when it is appropriate). Have a look:
 
 ```fsharp
+// ('vIn -> Block<'vOut,'s>) -> (seq<'vIn> -> seq<BlockOutput<'vOut, 's>>)
+let createEvaluatorWithStateAndValues (blockWithInput: 'vIn -> Block<'vOut,'s>) =
+    let mutable state = None
+    fun inputValues ->
+        seq {
+            for i in inputValues ->
+                let block = blockWithInput i
+                let result = (runB block) state
+                state <- Some result.state
+                result
+        }
 ```
 
 The `createEvaluatorWithStateAndValues` function itself takes a function as parameter. A single input value can be passed to that function that evaluates to a `Block`. That `Block` can then be evaluated itself. It produces a state that is assigned to the variable and the value that is finally yielded (together with the state) to our output sequence. This whole mechanism is wrapped in a function that takes an input array. This is the callback that could finally be passed to an audio backend. It can be evaluated multiple times, receiving the input buffer from the soundcard, mapping its values over with the given `Block` function and outputting a sequence of values that is taken by the audio backend.
@@ -822,11 +1115,36 @@ In the next chapter, we will analyze the results from our `blendedDistortion` ef
 Using the `createEvaluatorWithStateAndValues` function is quite straightforward:
 
 ```fsharp
+let evaluateWithStateAndValues = blendedDistortion 1.5 |> createEvaluatorWithStateAndValues
+
+// we can evaluate a sequence of input values.
+let outputStateAndValues_cycle1 = evaluateWithStateAndValues inputValues |> Seq.toList
+
+// evaluate more than once...
+let outputStateAndValues_cycle2 = evaluateWithStateAndValues inputValues |> Seq.toList
+let outputStateAndValues_cycle3 = evaluateWithStateAndValues inputValues |> Seq.toList
 ```
 
 After creating the `evaluateWithStateAndValues` function, we can pass the input values sequence (with n elements) to it and receive a sequence (with n elements) as output. This output sequence contains elements of type `BlockOutput` that contain the actual value together with the state of that cycle:
 
 ```fsharp
+[
+    { value = 0.0; state = (0.0, (0.1, ())) }
+    { value = 0.009; state = (0.06, (0.2, ())) }
+    { value = 0.0384; state = (0.168, (0.3, ())) }
+    { value = 0.07608; state = (0.3144, (0.4, ())) }
+    { value = 0.119152; state = (0.49152, (0.5, ())) }
+    { value = 0.174152; state = (0.693216, (0.6, ())) }
+    { value = 0.23318592; state = (0.8545728, (0.7, ())) }
+    { value = 0.294640192; state = (0.98365824, (0.8, ())) }
+    { value = 0.3573853184; state = (1.086926592, (0.9, ())) }
+    { value = 0.4206467866; state = (1.169541274, (1.0, ())) }
+    { value = 0.4689082547; state = (1.175633019, (1.0, ())) }
+    { value = 0.4551266038; state = (1.120506415, (1.0, ())) }
+    { value = 0.404101283; state = (1.016405132, (1.0, ())) }
+    { value = 0.2932810264; state = (0.8731241057, (1.0, ())) }
+    { value = 0.1746248211; state = (0.6984992845, (1.0, ())) }
+]
 ```
 
 Now have a look at the state, more concretely. The first tuple element of the innermost tuple is the state of our `fadeIn` function. We defined that it should increase an internal factor by 0.1 every cycle (and then multiply the input with this value to have a fade-in effect). The value you see here is the internal factor that increases by 0.1 until the limit of 1.0 is reached. It looks like it is working - at least from an inner perspective.
@@ -840,16 +1158,41 @@ Note that in our whole computation, there are no side effects at all, and our st
 There is also a version that emits not values and state, but only values:
 
 ```fsharp
+// ('vIn -> Block<'vOut,'s>) -> (seq<'vIn> -> seq<'vOut>)
+let createEvaluatorWithValues (blockWithInput: 'vIn -> Block<'vOut,'s>) =
+    let stateAndValueEvaluator = createEvaluatorWithStateAndValues blockWithInput
+    fun inputValues ->
+        stateAndValueEvaluator inputValues
+        |> Seq.map (fun stateAndValue -> stateAndValue.value)
 ```
 
 The `createEvaluatorWithValues` function simply maps the `BlockOutput` values to just a sequence of pure values. The usage is quite the same as above:
 
 ```fsharp
+let evaluateWithValues = blendedDistortion 1.5 |> createEvaluatorWithValues
+let outputValues = evaluateWithValues inputValues |> Seq.toList
 ```
 
 The result is:
 
 ```fsharp
+[
+    0.0
+    0.009
+    0.0384
+    0.07608
+    0.119152
+    0.174152
+    0.23318592
+    0.29464019
+    0.3573853184
+    0.4206467866
+    0.4689082547
+    0.4551266038
+    0.404101283
+    0.2932810264
+    0.174624821
+]
 ```
 
 The values are the same in both output sequences.
@@ -864,11 +1207,18 @@ Now we can write blocks, understand the inner mechanism of composing them, and e
 Before we begin, the following samples use a constant set of parameters used in our computations:
 
 ```fsharp
+let driveConstant = 1.5
+let hardLimitConstant = 0.7
+let lowPassConstant = 0.4
+let mixABConstant = 0.5
+let gainConstant = 0.5
+let fadeInStepSize = 0.1
 ```
 
 ...and there are some helper functions for evaluating a `Block` against the same set of input values:
 
 ```fsharp
+let inputValues = [ 0.0; 0.2; 0.4; 0.6; 0.8; 1.0; 1.0; 1.0; 1.0; 1.0; 0.8; 0.6; 0.4; 0.2; 0.0 ]
 ```
 
 <hint>
@@ -881,8 +1231,17 @@ Please take a look at the `src/6_Retracing_Stateful_FP.fsx` file in the github r
 
 Let's begin with the first part of our effect - the amplification. Besides that, we also show the original input values to compare them:
 
-
 ```fsharp
+let inputChart = chart "0 - Input" inputValues
+
+let ampChart = 
+    fun drive input -> block {
+        let amped = input |> amp drive
+        return amped
+    }
+    |> evalWithInputValuesAndChart "1 - amp"
+
+[ inputChart; ampChart ] |> showAll
 ```
 
 ![Input <-> Amp](./chart_input_and_amp.png)
@@ -902,6 +1261,13 @@ The effect of the amplifier is not only a higher volume, but also a steeper rise
 Next, the limiter comes into the game, taking the amplified value and limiting it to a given amount - in our case, 0.7.
 
 ```fsharp
+let ampHardLimitChart =
+    fun drive input -> block {
+        let amped = input |> amp drive
+        let hardLimited = amped |> limit hardLimitConstant
+        return hardLimited
+    }
+    |> evalWithInputValuesAndChart "2 - amp >> hardLimited"
 ```
 
 ![Amp <-> Hard Limit](./chart_amp_hardLimit.png)
@@ -914,6 +1280,15 @@ All values above 0.7 are limited to 0.7.
 ### Low Pass
 
 ```fsharp
+let ampLowPassChart =
+    fun drive input -> block {
+        let amped = input |> amp drive
+        let! softLimited = amped |> lowPass lowPassConstant
+        return softLimited
+    }
+    |> evalWithInputValuesAndChart "3 - amp >> lowPass"
+
+[ ampChart; ampLowPassChart ] |> showAll
 ```
 
 ![Amp <-> Low Pass](./chart_amp_lowPass.png)
@@ -929,6 +1304,17 @@ Looking at the chart, we see that the low passed signal follows its input (the a
 Mix is easy, since we have no "time" (no state) incorporated. It is completely linear and can be calculated with values at one single point in time, without looking at state or past values.
 
 ```fsharp
+let mixedChart =
+    fun drive input -> block {
+        let amped = input |> amp drive
+        let hardLimited = amped |> limit hardLimitConstant
+        let! softLimited = amped |> lowPass lowPassConstant
+        let mixed = mix 0.5 hardLimited softLimited
+        return mixed
+    }
+    |> evalWithInputValuesAndChart "4 - .. >> mixed"
+
+[ ampHardLimitChart; ampLowPassChart; mixedChart ] |> showAll
 ```
 
 ![Hard Limit <-> Low Pass <-> Mix](./chart_hardLimit_lowPass_mix.png)
@@ -940,6 +1326,18 @@ Since we have a mix factor of 0.5, you can add both input values of a point in t
 ### Fade In
 
 ```fsharp
+let mixedFadeInChart =
+    fun drive input -> block {
+        let amped = input |> amp drive
+        let hardLimited = amped |> limit hardLimitConstant
+        let! softLimited = amped |> lowPass lowPassConstant
+        let mixed = mix mixABConstant hardLimited softLimited
+        let! fadedIn = mixed |> fadeIn fadeInStepSize 0.0
+        return fadedIn
+    }
+    |> evalWithInputValuesAndChart "5 - .. >> mixed >> fadeIn"
+
+[ mixedChart; mixedFadeInChart ] |> showAll
 ```
 
 ![Mix <-> Fade In](./chart_mix_fadeIn.png)
@@ -955,6 +1353,19 @@ We analyzed fadeIn before, when we looked at evaluating blocks. We saw that the 
 Now the output gain stage:
 
 ```fsharp
+let finalChart =
+    fun drive input -> block {
+        let amped = input |> amp drive
+        let hardLimited = amped |> limit hardLimitConstant
+        let! softLimited = amped |> lowPass lowPassConstant
+        let mixed = mix mixABConstant hardLimited softLimited
+        let! fadedIn = mixed |> fadeIn fadeInStepSize 0.0
+        let gained = amp gainConstant fadedIn
+        return gained
+    }
+    |> evalWithInputValuesAndChart "6 - .. >> mixed >> fadeIn >> gained"
+
+[ mixedFadeInChart; finalChart ] |> showAll
 ```
 
 ![Fade In <-> Gain](./chart_fadeIn_gain.png)
@@ -968,6 +1379,7 @@ This is also just an amplifier, which we parametrized with 0.5. So divide an inp
 And finally - just for fun - the original input values compared to the final result:
 
 ```fsharp
+[ inputChart; finalChart ] |> showAll
 ```
 
 ![Final](./chart_final.png)
@@ -1014,6 +1426,19 @@ Achieving this with the `block { ... }` syntax is not easy. Although we could em
 But there is a solution: feedback!
 
 ```fsharp
+type Fbd<'fbdValue, 'value> = { feedback: 'fbdValue; out: 'value }
+
+let (<->) seed (f: 'fbdValue -> Block<Fbd<'fbdValue,'value>,'state>) =
+    Block <| fun prev ->
+        let myPrev,innerPrev = 
+            match prev with
+            | None            -> seed,None
+            | Some (my,inner) -> my,inner
+        let fRes = f myPrev
+        let lRes = (runB fRes) innerPrev
+        let feed = lRes.value
+        let innerState = lRes.state
+        { value = feed.out; state = feed.feedback,Some innerState }
 ```
 
 The key is that the user can specify a function that - with the help of the feedback operator `<->` - is evaluated and resulting in a `Block` itself. This `Block` accumulates the user's feedback value as well as the state of the actual computation and packs (later unpacks) it together.
@@ -1021,6 +1446,20 @@ The key is that the user can specify a function that - with the help of the feed
 #### UseCase 1: Two Counter Alternatives
 
 ```fsharp
+// some simple blocks
+let counter (seed: float) (increment: float) =
+    Block <| fun maybeState ->
+        let state = match maybeState with | None -> seed | Some v -> v
+        let res = state + increment
+        {value=res; state=res}
+
+// we can rewrite 'counter' by using feedback:
+let counterAlt (seed: float) (increment: float) =
+    seed <-> fun state ->
+        block {
+            let res = state + increment
+            return { out=res; feedback=res }
+        }
 ```
 
 Look at the sample for evaluating the counter functions.
@@ -1030,6 +1469,25 @@ Look at the sample for evaluating the counter functions.
 #### UseCase 2: State in 'block { ... }' Syntax
 
 ```fsharp
+let myFx input =
+    block {
+        // I would like to feed back the amped value
+        // and access it in the next cycly
+        // - but how?
+        let amped = amp 0.5 input (* - (lastAmped * 0.1) *)
+        let! lp = lowPass 0.2 amped
+        return lp
+    }
+
+let myFxWithFeedback input =
+    // initial value for lastAmped is: 0.0
+    0.0 <-> fun lastAmped ->
+        block {
+            let amped = amp 0.5 input - (lastAmped * 0.1)
+            let! lp = lowPass 0.2 amped
+            // we emit our actual value (lp), and the feedback value (amped)
+            return { out=lp; feedback=amped }
+        }
 ```
 
 ### IV - Arithmetic operators
@@ -1039,16 +1497,33 @@ Sometimes you want to make some arithmetic calculation from a `Block`'s result _
 Instead of this...
 
 ```fsharp
+block {
+    // we can add a Block and a float
+    let! cnt = (counter 0.0 1.0)
+    let cntPlus100 = cnt + 100.0
+    // do some other things with cntPlus100...
+    return cnt
+}
 ```
 
 ...you want to do this:
 
 ```fsharp
+block {
+    // we can add a Block and a float
+    let! cnt = (counter 0.0 1.0) + 100.0
+    return cnt
+}
 ```
 
 ...or you even want to add two blocks directly:
 
 ```fsharp
+block {
+    // we can add 2 Blocks
+    let! cnt = (counter 0.0 1.0) + (counter 0.0 10.0)
+    return cnt
+}
 ```
 
 This is possible with a more or less tricky mechanism incorporating an F# language feature called "Statically Resolved Type Parameters" in combination with a Single Case Union and operator overloading. An explanation of why and how this works is worth an article. Unfortunately, I cannot find the link to a presentation I once had, so please forgive me for not referencing the author of this idea.
@@ -1056,6 +1531,26 @@ This is possible with a more or less tricky mechanism incorporating an F# langua
 Anyway, here is the code (as an example for `+`):
 
 ```fsharp
+type ArithmeticExt = ArithmeticExt with
+    static member inline (?<-) (ArithmeticExt, a: Block<'v,'s>, b) =
+        block {
+            let! aValue = a
+            return aValue + b
+        }
+    static member inline (?<-) (ArithmeticExt, a, b: Block<'v,'s>) =
+        block {
+            let! bValue = b
+            return a + bValue
+        }
+    static member inline (?<-) (ArithmeticExt, a: Block<'v1,'s1>, b: Block<'v2,'s2>) =
+        block {
+            let! aValue = a
+            let! bValue = b
+            return aValue + bValue
+        }
+    static member inline (?<-) (ArithmeticExt, a, b) = a + b
+
+let inline (+) a b = (?<-) ArithmeticExt a b
 ```
 
 ### V - Modulation

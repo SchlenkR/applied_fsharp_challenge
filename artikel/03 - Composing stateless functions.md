@@ -116,7 +116,7 @@ let blendedDistortion_Alt2 drive input =
     let mixed =
         (
             amped |> limit 0.7,       // a: First branch: hardLimited
-            amped |> lowPass 0.2   // b: Second Branch: softLimited
+            amped |> lowPass 0.2      // b: Second Branch: softLimited
         )
         ||> mix 0.5
     let fadedIn = mixed |> fadeIn 0.1
@@ -136,7 +136,7 @@ let blendedDistortion_Alt3 drive input =
     let amped = input |> amp drive
     let mixed =
         (
-            (amped |> lowPass 0.2)  // b: Second Branch: softLimited
+            (amped |> lowPass 0.2)     // b: Second Branch: softLimited
             ^|> (amped |> limit 0.7)   // a: First branch: hardLimited
             ^|> mix 0.5
         )
