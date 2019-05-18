@@ -23,19 +23,19 @@ After evaluating several languages, I decided to use F#, mainly due to its "in-b
 
 #### A Brief Definition
 
-In the analog world, physical quantities like electric currency are used to represent a signal that is finally sent to a speaker. These quantities are created and altered by low-level components like condensers, resistors, magnetic coils, transistors, and diods, which are connected to each others in circuits. They are composed of larger components like operational amplifiers that are used to build modules like filters and oscillators, which synthesizers and effect processors are made of. Digital audio signal processing (Audio DSP) is about modeling these components at different levels of abstraction, resulting in the simulation of circuits similar to their analog counterparts (of course, there is no limit to creating completely new forms of synthesizers and effects).
+In the analog world, physical quantities like electric currency are used to represent a signal that is finally sent to a speaker. These quantities are created and altered by low-level components like condensers, resistors, magnetic coils, transistors, and diods, which are connected to each others in circuits. They are composed in larger components like operational amplifiers that are used to build modules like filters and oscillators, which synthesizers and effect processors are made of. Digital audio signal processing (Audio DSP) is about modeling these components at different levels of abstraction, resulting in the simulation of circuits similar to their analog counterparts (of course, there is no limit to creating completely new forms of synthesizers and effects).
 
 #### Quantization of Time and Values
 
-Digital signal processing - in contrast to analog signal processing - deals with quantized values over a discrete time. Consider, for instance, an analog synthesizer. It creates and outputs a signal based on electric currency, which is continuous from a physical point of view. A computer cannot process values in a continuous way - it has to *quantize* two things:
+Digital signal processing - in contrast to analog signal processing - deals with quantized values over a discrete time. Consider, for instance, an analog synthesizer. It creates and outputs a signal based on electric currency, which is continuous from a physical point of view. A computer cannot process values in a continuous way - it has to _quantize_ two things:
 
 **Time:**
 
-This is called sampling, and it happens for an audio signal usually at multiples of 44100 times per second (44.1 kHz). Why 44100? Take a look at the [Nyquist-Shannon sampling theorem](https://en.wikipedia.org/wiki/Nyquist-Shannon_sampling_theorem) (you don't [SGF9]have to read it to understand this article[SGF10]).
+This is called sampling, and it happens for an audio signal usually at multiples of 44100 times per second (44.1 kHz). Why 44100? Take a look at the [Nyquist-Shannon sampling theorem](https://en.wikipedia.org/wiki/Nyquist-Shannon_sampling_theorem) (you do not have to read the Wikipedia article it to understand this article).
 
 **Values:**
 
-At each sample point, a value must be captured (analog to the electric currency). This happens usually in a number represented by a 16, 32 or 64 bit value. In this article[SGF11], I use a F# "float" value, which is a 64 bit floating point number.
+At each sample point, a value must be captured (analog to the electric currency). This happens usually in a number represented by a 16, 32 or 64 bit value. In this article, I use a F# "float" value, which is a 64 bit floating point number.
 
 Having understood this definition, it's easy to define what a signal is.
 
@@ -45,36 +45,36 @@ Sampling these values with constant time intervals results in a sequence of valu
 
 ![Sin Wave](./sinus_wave.png)
 
-Here, I have captured a sine wave with the *amplitude* of 0.5 and a frequency of ca. 150Hz (assuming the x-scale is milliseconds, then I have three cycles in 0.02s = 150Hz). The sample rate is 1kHz because I have captured 20 samples in 0.02s. That makes 1000 samples in 1s. This is 1kHz.
+Here, I have captured a sine wave with the _amplitude_ of 0.5 and a frequency of ca. 150Hz (assuming the x-scale is milliseconds, then I have three cycles in 0.02s = 150Hz). The sample rate is 1kHz because I have captured 20 samples in 0.02s. That makes 1000 samples in 1s. This is 1kHz.
 
-Given that I have a sample rate of 16Hz, I can simplify the time-value sequence to just a value sequence:
+Given that I have a sample rate of 16Hz, I can just a value sequence instead of a time-value sequence:
 
 ```fsharp
 ```
 
-The point in time of the the n-th value in the sequence can easily be calculated when sample rate and starting time are given. This fact is fundamental and leads to a definition of what *processing* means:
+The point in time of the the n-th value in the sequence can easily be calculated when sample rate and starting time are given. This fact is fundamental and leads to a definition of what _processing_ means:
 
 <statement>DSP is about creating or changing sequence of values.</statement>
 
-That sounds very general - and it indeed is! The techniques introduced here have basically no specialization in terms of "sound" or "audio" - even if they fit well.
+That sounds very general - and it indeed is! The techniques introduced here have basically no specialization in terms of "sound" or "audio" - even if they fit well in that domain.
 
 <hint>
 
-For the sake[SGF12] of simplification, please note that the sample code won't use real-world parameters like `8000.0Hz`. [SGF13] Instead, pseudo values are used to create a comprehensive result and keep the code simple.
+For the sake of simplification, please note that the sample code won't use real-world parameters like `8000.0Hz`. Instead, pseudo values are used to create a comprehensive result and keep the code simple.
 
 </hint>
 
 #### Real Time
 
-"Real Time" originally means that a system is able to react in a predefined timespan. That doesn't necessarily mean it has to be "fast" in the context of the problem, but only that it is reliable in terms of reaction time. Since making music mostly has a "live" character, this is a huge constraint that affects how computer music is made. An example: You composed a nice synth line, and now you want to apply your handwritten distortion[SGF14] effect to it. While it is playing, you want to tune parameters of your effect - and you expect to hear a change in sound _immediately_, which usually means in some 10 to 100 ms. When that timespan is longer, IMHO, it's not that fun anymore and is also harder because you are missing the direct feedback of your action.
+"Real Time" originally means that a system is able to react in a predefined timespan. That does not necessarily mean it has to be "fast" in the context of the problem, but only that it is reliable in terms of reaction time. Since making music mostly has a "live" character, this is a huge constraint that affects how computer music is made. An example: You composed a nice synth line, and now you want to apply your handwritten distortion effect to it. While it is playing, you want to tune parameters of your effect - and you expect to hear a change in sound _immediately_, which usually means in some 10 to 100 ms. When that timespan is longer, IMHO, it's not that fun anymore and is also harder because you are missing the direct feedback of your action.
 
-As a consequence, you have to design systems that work on a per-sample basis instead of having random access to the whole input sequence. This means it is not possible to wait until the whole input signal (the synth line) is available and then apply your effect by mapping values. That amount of latency wouldn't be acceptable for the _most_ use cases. Therefore, signal processing can be seen as some kind of *stream processing*.
+As a consequence, you have to design systems that work on a per-sample basis instead of having random access to the whole input sequence. This means it is not possible to wait until the whole input signal (the synth line) is available and then apply your effect by mapping values. That amount of latency wouldn't be acceptable for the _most_ use cases. Therefore, signal processing can be seen as some kind of _stream processing_.
 
 ### Distinction
 
 Audio DSP and computer music are broad fields. This article focuses on some aspects while only touching others or not discussing others. Here, I will list the key concepts and distinctions of this article.
 
-* The focus is on creating and manipulating[SGF15] samples that finally may result in sounds, rather than on control signals or composition.
+* The focus is on creating and manipulating samples that finally may result in sounds, rather than on control signals or composition. It also does not discuss libraries for audio playback.
 * The article focuses on monophonic mono signals, although the concepts allow polyphony and multichannel signals.
 * There are no performance considerations in this article for the introduced concepts.
 * Signals are represented in the time domain, not in the frequency domain. 
@@ -91,9 +91,9 @@ If[SGF16] you are familiar with a modern language like C#, Java, C++, JavaScript
 
 This was my primary source when I  was getting involved with F#, and I can definitely recommend it when you want to learn about the key concepts of functional programming. I recommend reading [this](https://fsharpforfunandprofit.com/series/expressions-and-syntax.html), [this](https://fsharpforfunandprofit.com/posts/elevated-world-2/), and [this](https://fsharpforfunandprofit.com/posts/currying/#series-toc).
 
-* The book Real-World Functional Programming: With Examples in F# and C#[SGF17] by Tomas Petricek.
+* The book _Real-World Functional Programming: With Examples in F# and C#_ by Tomas Petricek.
 
-* The book Expert F# 4.0 by Don Syme et al. I especially recommend chapters 2 and 3, which capture the most common functional aspects of F#.
+* The book _Expert F# 4.0_ by Don Syme et al. I especially recommend chapters 2 and 3, which capture the most common functional aspects of F#.
 
 ### Setup and Samples
 
@@ -111,6 +111,10 @@ Ionide is a VS Code package suite for cross platform F# development. You can get
 
 On the Ionide homepage, you can see how to install F# for your platform (macOS, Windows, Linux).
 
+* **F# Interactive**
+
+I recommend making yourself familiar with the concept of _interactive development_, which is called "F# Interactive". It is a playground for evaluating code snippets that are built upon each other, without setting up a whole development project. The concept and tools are well explained in the reference list above. Using VS Code and Ionide, you have everything you need to get started immediately.
+
 #### Article Sources
 
 There is a [github repository](https://github.com/ronaldschlenker/challenge) that you can clone (or view online) with all the samples included.
@@ -122,22 +126,22 @@ Now you are equipped with everything you need, so let's get our hands into it!
 
 ## Writing Stateless Functions
 
-Since we now know what a signal is (a value that changes over time), that DSP is easy (dealing with sequences of values), and that we are interested in functions that transform scalar inputs into scalar outputs, we start directly by writing a processing function. Later on, you will see how to compose these small functions to a larger system.
+Since we now know what a signal is (a value that changes over time), that DSP is easy (dealing with sequences of values), and that we are interested in functions that transform scalar inputs into scalar outputs, let us start directly by writing a processing function. Later on, you will see how to compose these small functions to a larger system.
 
 ### Amplifier
 
-Amplifying signals is a science in itself. You [SGF18]could spend a lot of money buying analog gear that sounds just "right," but "right" is a subjective term based on a user's preferences. For us, a simple solution will be enough, Amplification of a signal in this context means scale values linearly. We can do that this way:
+Amplifying signals is a science in itself. You could spend a lot of money buying analog gear that sounds just "right," but "right" is a subjective term based on a user's preferences. For us, a simple solution will be enough. Amplification of a signal in this context means scale values linearly. We can do that this way:
 
 ![Before Amp - After Amp](./chart_input_and_amp.png)
 
-Linear scaling of a value is mathematically just a multiplication, so that is indeed very simple. This function does the job.
+Linear scaling of a value is mathematically just a multiplication, so that is indeed very simple. This function does the job:
 
 ```fsharp
 ```
 
-### Another Example[SGF19]: Hard Limiter
+### Another Example: Hard Limiter
 
-Now that we have our amplifier, we want to have the ability to *limit* a signal to a certain boundary. Again, there are a lot of ways to do this in a "nice" sounding way, but we will use a very simple technique that leads to a very harsh sounding distortion when the input signal gets limited. The limiter looks like this:
+Now that we have our amplifier, we want to have the ability to _limit_ a signal to a certain boundary. Again, there are a lot of ways to do this in a "nice" sounding way, but we will use a very simple technique that leads to a very harsh sounding distortion when the input signal gets limited. The limiter looks like this:
 
 ```fsharp
 ```
@@ -236,7 +240,7 @@ In the following code samples, we will use all these composition techniques, dep
 ### Parallel Composition (Branch and Merge)
 
 <hint>
-Parallel composition doesn't necessarily mean that branches are executed in parallel from a threading/timing[SGF25] point of view. In the case of this article, branches are executed one after another.
+Parallel composition does not necessarily mean that branches are executed in parallel from a threading/timing[SGF25] point of view. In the case of this article, branches are executed one after another.
 </hint>
 
 Now that we understand what serial composition is, we know it is useful to have functions of type ```float -> float```, and we understand that serial composition of these functions can be done by using the `>>` or `|>` operators.
@@ -293,7 +297,7 @@ Note that is not a commor [SGF29]or idiomatic F# way, and I won't use it in the 
 
 #### A note on "lowPass" and "fadeIn:
 
-Note that for now, we don't have a low pass filter, so we just use a placeholder function that works like a normal stateless processing function of type `float -> float`:
+Note that for now, we do not have a low pass filter, so we just use a placeholder function that works like a normal stateless processing function of type `float -> float`:
 
 ```fsharp
 ```
@@ -331,7 +335,7 @@ In the previous chapters, we wrote and composed pure (stateless) functions. This
 
 ### Revisit Low Pass Filter
 
-In the last chapter, we treated the low pass[SGF30] filter function as if it was pure, which means that from evaluation cycle to cycle, it doesn't "remember" anything; there is no information preserved between evaluations of the same function. In case of a filter, this cannot work, because filters need more than a single value: they deal with frequencies, and the concept of frequency requires a timespan. It's about how a sequence of values change over time. It's like with stock prices: you cannot say if there was a crash or if the market is hot by just looking at the current value. You need to look at the development of a price during a certain timespan. There are more things: some filters only need some past input values (FIR, finite impulse response). But there are other filter designs that depend on their past output values (IIR, infinite impulse response). So we need a mechanism that preserves past input, past output (and maybe past intermediate) **state**.
+In the last chapter, we treated the low pass[SGF30] filter function as if it was pure, which means that from evaluation cycle to cycle, it does not "remember" anything; there is no information preserved between evaluations of the same function. In case of a filter, this cannot work, because filters need more than a single value: they deal with frequencies, and the concept of frequency requires a timespan. It's about how a sequence of values change over time. It's like with stock prices: you cannot say if there was a crash or if the market is hot by just looking at the current value. You need to look at the development of a price during a certain timespan. There are more things: some filters only need some past input values (FIR, finite impulse response). But there are other filter designs that depend on their past output values (IIR, infinite impulse response). So we need a mechanism that preserves past input, past output (and maybe past intermediate) **state**.
 
 <excurs data-name="Very Brief theory of a low pass filter">
 
@@ -382,7 +386,7 @@ Let's see how we can implement it in a block diagram:
 
 ![Low pass filter](./bs_delay.png)
 
-One interesting thing to note is the[SGF34]re is no explicit state in the way that we store or memorize values. Instead, the state is modeled as "output value delayed by 1 sample" ("t-1" block), which is then fed back into the next evaluation of the whole function. **This is a key point** because we can model any kind of local state in that way - no matter how that state is structured (it doesn't have to be a simple `float` - it could be anything). A abstract "block with state" can then be modeled like this:
+One interesting thing to note is the[SGF34]re is no explicit state in the way that we store or memorize values. Instead, the state is modeled as "output value delayed by 1 sample" ("t-1" block), which is then fed back into the next evaluation of the whole function. **This is a key point** because we can model any kind of local state in that way - no matter how that state is structured (it does not have to be a simple `float` - it could be anything). A abstract "block with state" can then be modeled like this:
 
 ![Block with state and parameters](./bs_block_with_state.png)
 
@@ -397,7 +401,7 @@ We start with an object oriented programming approach.
 
 ## Composing Stateful Objects
 
-As the name implies, we are first going to use an approach  called "Object Oriented Programming." If you don't know what that is, read this:
+As the name implies, we are first going to use an approach  called "Object Oriented Programming." If you do not know what that is, read this:
 
 <excurs data-name="OOP">
 
@@ -501,7 +505,7 @@ Assuming that some mechanism passes in previous state and records output state (
 
 What have we done?
 
-* There is no mutable state anymore, since the previous state gets passed in as a function parameter. Benefit: we don't need a `lowPassCtor` function anymore.
+* There is no mutable state anymore, since the previous state gets passed in as a function parameter. Benefit: we do not need a `lowPassCtor` function anymore.
 
 * After application of the timeConstant parameter _and_ the actual input value, the remaining function has the signature[SGF42]: ```float -> float * float```: the previous state comes in, resulting in a tuple that "packs" output state and an actual output value together.
   
@@ -554,7 +558,7 @@ Since we might have signal values that are not[SGF46] always of type float, we c
 ```
 
 The code for `lowPass` and `fadeIn` remain the same because the compiler infers `float` as value parameter from how they are used.
-Now we need a way of composing those functions. The composition must handle the "recording" of the output state and feed it into the next evaluation's input, and this must be done for every block in the computation. This sounds like we just moved the key issue (instance management) into the composition layer. This is true - and beneficial - because we can "outsource" a recurring aspect of our programming model so that the user doesn't have to handle it anymore in a concrete way.
+Now we need a way of composing those functions. The composition must handle the "recording" of the output state and feed it into the next evaluation's input, and this must be done for every block in the computation. This sounds like we just moved the key issue (instance management) into the composition layer. This is true - and beneficial - because we can "outsource" a recurring aspect of our programming model so that the user does not have to handle it anymore in a concrete way.
 
 
 
@@ -610,7 +614,7 @@ Here it is in the desired form:
 ```fsharp
 ```
 
-Here, we treat lowPass and fadeIn as a pure function - which is what we wanted - but which also doesn't work. We then use OOP that solves[SGF50] the issue, but forces us to create and manage references to instances.
+Here, we treat lowPass and fadeIn as a pure function - which is what we wanted - but which also does not work. We then use OOP that solves[SGF50] the issue, but forces us to create and manage references to instances.
 
 Now that we have introduced Blocks and the Pick Up and Delivery strategy (implemented by the 'bind' combinator function), let's see how far we have come.
 
@@ -644,7 +648,7 @@ Let's start with breaking the computation into pieces every time a `Block` is us
 
 **Indent**
 
-That doesn't look like the desired result (and it wouldn't compile - but let's set[SGF53] that aside for a moment). But with a little bit of tweaking indentation, we can make it look a little more readable:
+That does not look like the desired result (and it wouldn't compile - but let's set[SGF53] that aside for a moment). But with a little bit of tweaking indentation, we can make it look a little more readable:
 
 ```fsharp
 ```
@@ -763,7 +767,7 @@ Since we assume that there is only one meaningful initial value for lowPass, we 
 ```fsharp
 ```
 
-For our fadeIn, we want the user to specify an initial value, since it might be that he or she doesn't want to fade from silence, but from half loudness:
+For our fadeIn, we want the user to specify an initial value, since it might be that he or she does not want to fade from silence, but from half loudness:
 
 ```fsharp
 ```
@@ -779,7 +783,7 @@ So finally, we can just pass in `None` as the initial state, so that code looks 
 
 In the code above, we evaluates a block one time. This gives one `BlockResult` value that contains the actual value and the accumulated state of that evaluation. Since we are not interested in a single value, but in a sequence of values for producing sound, we need to repeat the pattern.
 
-Assuming we have a sequence that produces random values (it's actually a list in F#, but it doesn't necessarily have to be a list; a sequence of values would be sufficient):
+Assuming we have a sequence that produces random values (it's actually a list in F#, but it does not necessarily have to be a list; a sequence of values would be sufficient):
 
 ```fsharp
 ```
@@ -805,7 +809,7 @@ The `createEvaluatorWithStateAndValues` function itself takes[SGF58] a function.
 
 <hint>
 
-In the next chapter, we will analyze the results from our `blendedDistortion` effect. For now, we will just look at **how** we can evaluate blocks against an input value sequence.
+In the next chapter, we will analyze the results from our `blendedDistortion` effect. For now, we will just look at _how_ we can evaluate blocks against an input value sequence.
 
 </hint>
 
@@ -936,7 +940,7 @@ Since we have a mix factor of 0.5, you can add both input values of a point in t
 
 **Plausibility:**
 
-We analyzed fadeIn before, when we looked at evaluating blocks. We saw that the state value increased by the given step size of 0.1 every cycle. That was the inner view - we couldn't check whether the final calculation was correct. Now we can. The input of fadeIn (which is the "mix" value) has to be multiplied by the corresponding state value [ 0; 0.1; 0.2 ;...]. Now, believe it or not, I double checked all the values, and the assumption is true! (I'm happy if you don't believe me and check the facts on your own - it's easy!).
+We analyzed fadeIn before, when we looked at evaluating blocks. We saw that the state value increased by the given step size of 0.1 every cycle. That was the inner view - we couldn't check whether the final calculation was correct. Now we can. The input of fadeIn (which is the "mix" value) has to be multiplied by the corresponding state value [ 0; 0.1; 0.2 ;...]. Now, believe it or not, I double checked all the values, and the assumption is true! (I'm happy if you do not believe me and check the facts on your own - it's easy!).
 
 ![Doublechecking Fade In](./calculator.png)
 
@@ -1022,7 +1026,7 @@ Look at the sample for evaluating the counter functions.
 
 ### III - Arithmetic operators
 
-Sometimes you want to make some arithmetic calculation from a block's result *directly* and not use the identifier of the bound value.:
+Sometimes you want to make some arithmetic calculation from a block's result _directly_ and not use the identifier of the bound value.:
 
 Instead of this...
 
@@ -1051,11 +1055,11 @@ Anyway, here is the code (as an example for `+`):
 [SGF4]"Where" is only used for physical locations.
 [SGF5]This construction is awkward, but it is necessary.
 [SGF6]I've corrected this spelling per Merriam-Webster's dictionary, which is the standard in many arms of the publishing industry.
-[SGF7]The use of the word "like" here indicates that the list that follows will not be all-inclusive, so you don't need to add "etc." or "among others" or similar wording at the end of the list.
+[SGF7]The use of the word "like" here indicates that the list that follows will not be all-inclusive, so you do not need to add "etc." or "among others" or similar wording at the end of the list.
 [SGF8]Should this be "diodes"?
 [SGF9]Contractions are not used in formal written English, but I'm following your lead here on the theory that this is a less formal article, not an academic one. If I'm wrong about this, by all means change all the contractions to the long form of the word--in this case, it would be "do not."
-[SGF10]This is a little unclear--do you mean you don't have to read the Wikipedia article to understand your article? Please clarify this.
-[SGF11]If you don't have co-authors, "I" is better than "we," especially since you started out referring to yourself as "I."
+[SGF10]This is a little unclear--do you mean you do not have to read the Wikipedia article to understand your article? Please clarify this.
+[SGF11]If you do not have co-authors, "I" is better than "we," especially since you started out referring to yourself as "I."
 [SGF12]This improves the phrasing.
 [SGF13]The period precedes the quotation mark in U.S. usage.
 [SGF14]Is this what you meant?
