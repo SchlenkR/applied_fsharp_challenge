@@ -132,3 +132,6 @@ Zum Schluss: Reduce benutzen als Runtime
 * TODOs
 * About the author
 * Erklären: Diese Technik kann man für vieles einsetzen und sie ist nicht gebunden an Audio, da ein Signal nur ein sich über die Zeit ändernder Wert ist
+* <em> tag anders formatieren
+* block -> `Block`
+* 
