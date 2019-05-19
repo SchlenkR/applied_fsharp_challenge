@@ -7,7 +7,7 @@ You can find the final article [here](http://binarygears.de/AppliedFSharpChallen
 
 ## Tagged Version
 
-Please use the tag **contribution** of this repository to get the version that was used for the challenge.
+Please use the tag **contribution_2** of this repository to get the version that was used for the challenge.
 
 ## Structure
 
