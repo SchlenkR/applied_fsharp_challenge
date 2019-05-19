@@ -54,6 +54,23 @@ img[src*="calculator"] {
     width: 60%;
 }
 
+.col-2 {
+    column-count: 2;
+    column-gap: 0;
+    column-rule: none;
+} 
+
+.col-2 pre {
+    margin-top: 0;
+    margin-left: 0;
+    margin-right: 0;
+} 
+
+.col-2 pre code span {
+    font-size: 0.95em;
+    line-height: 0.95em;
+} 
+
 .container {
     width: 800px;
     margin: auto;

@@ -43,9 +43,35 @@ let blendedDistortion2 drive input =
 
 That's better! Now compare this code with the desired code from:
 
-TODO: 2 Bilder mit Code Compare
+<div class="col-2">
+
+```fsharp
+let blendedDistortion drive input =
+    let amped = input |> amp drive
+    let hardLimited = amped |> limit 0.7
+    let softLimited = amped |> lowPass 0.2
+    let mixed = mix 0.5 hardLimited softLimited
+    let fadedIn = mixed |> fadeIn 0.1
+    let gained = amp 0.5 fadedIn
+    gained
+```
+
+```fsharp
+let blendedDistortion2 drive input =
+    let amped = input |> amp drive
+    let hardLimited = amped |> limit 0.7
+    bind (amped |> lowPass 0.2) (fun softLimited ->
+    let mixed = mix 0.5 hardLimited softLimited
+    bind (mixed |> fadeIn 0.1) (fun fadedIn ->
+    let gained = amp 0.5 fadedIn
+    gained))
+```
+
+</div>
 
 Every time we use a lowPass or fadeIn, there's no let binding anymore, but rather a bind that takes exactly the expression on the right side of the let binding. The second parameter of bind is then the "rest of the computation," coded as a lambda function, that has a parameter with the identifier name of the let binding.
+
+This form can still be improved by introducing a custom operator:
 
 **Custom bind Operator**
 
@@ -57,6 +83,19 @@ let (>>=) = bind
 
 ...and remove the parenthesis:
 
+<div class="col-2">
+
+```fsharp
+let blendedDistortion drive input =
+    let amped = input |> amp drive
+    let hardLimited = amped |> limit 0.7
+    let softLimited = amped |> lowPass 0.2
+    let mixed = mix 0.5 hardLimited softLimited
+    let fadedIn = mixed |> fadeIn 0.1
+    let gained = amp 0.5 fadedIn
+    gained
+```
+
 ```fsharp
 let blendedDistortion3 drive input =
     let amped = input |> amp drive
@@ -67,6 +106,8 @@ let blendedDistortion3 drive input =
     let gained = amp 0.5 fadedIn
     gained
 ```
+
+</div>
 
 Now we are pretty close to the desired code, except that the identifiers of the lambdas are coming after the expression. But we will get rid of that, too, in a minute.
 
@@ -119,9 +160,35 @@ let blendedDistortion drive input = patch {
 }
 ```
 
-This looks almost similar to what we wanted to achieve. We only have to wrap our code in the "patch" and use let! instead of let every time we deal with blocks instead of pure functions. The F# compiler translates this syntax into the form we have seen above.
+This looks almost similar to what we wanted to achieve. We only have to wrap our code in the "patch" and use let! instead of let every time we deal with blocks instead of pure functions. The F# compiler translates this syntax into the form we have seen above. Compare the desired form and the final form:
 
-TODO: Compare Bild der beiden Formen
+
+<div class="col-2">
+
+```fsharp
+let blendedDistortion drive input =
+    let amped = input |> amp drive
+    let hardLimited = amped |> limit 0.7
+    let softLimited = amped |> lowPass 0.2
+    let mixed = mix 0.5 hardLimited softLimited
+    let fadedIn = mixed |> fadeIn 0.1
+    let gained = amp 0.5 fadedIn
+    gained
+```
+
+```fsharp
+let blendedDistortion drive input = patch {
+    let amped = input |> amp drive
+    let hardLimited = amped |> limit 0.7
+    let! softLimited = amped |> lowPass 0.2
+    let mixed = mix 0.5 hardLimited softLimited
+    let! fadedIn = mixed |> fadeIn 0.1
+    let gained = amp 0.5 fadedIn
+    return gained
+}
+```
+
+</div>
 
 So our primary goal has been reached! We abstracted state (and therefor instance-) management, so that the user can focus on writing signal processing functions.
 
