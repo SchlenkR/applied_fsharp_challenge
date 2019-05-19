@@ -1,4 +1,12 @@
 
+<div>
+    <p>You can find this article on <a href="https://github.com/ronaldschlenker/applied_fsharp_challenge">GitHub</a>.</p>
+    <p><a href="http://binarygears.de/impressum">Impressum</a></p>
+    <p>(c) Ronald Schlenker, May 2019</p>
+    <hr />
+</div>
+
+
 # Digital Signal Processing with F#
 
 Making music with the help of computers is not new. It started with the [MUSIC/MUSIC-N](https://en.wikipedia.org/wiki/MUSIC-N) language family, which was already capable of synthesizing sounds, back in the 1950s. There are a lot of graphic tools like [PureData](https://puredata.info/), with which the user can put together signal flows by dragging predefined objects onto a canvas and connecting their inputs/outputs. Some tools focus on controlling, composition and live performance, like [Sonic PI](https://sonic-pi.net/) or [Tidal](https://tidalcycles.org/index.php/Welcome), while others can do both, like [SuperCollider](https://supercollider.github.io/). Other languages and tools incorporate interesting concepts to make working with (audio and control) signals easy, like [ChucK](http://chuck.cs.princeton.edu/), which has an interesting way of dealing with time. There is the [FAUST](https://faust.grame.fr/) language that makes use of a pure function composition concept quite similar to Haskell's [Arrows](https://en.wikibooks.org/wiki/Haskell/Understanding_arrows). And of course, with the widely used multiparadigm languages like C or C++, the user can do basically everything, as long as he or she knows how to do it. There is way more interesting stuff out there, such as the JavaScript library [genish.js / gibberish](http://www.charlie-roberts.com/genish/), which aims to provide ways by which a user can define a syntax tree that is translated into high performance code.

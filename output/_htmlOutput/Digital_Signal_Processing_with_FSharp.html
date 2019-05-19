@@ -58,7 +58,13 @@
     <div class="row" style="margin-top:30px">
       <div class="span1"></div>
       <div class="span10" id="main">
-        <h1>Digital Signal Processing with F#</h1>
+        <div>
+    <p>You can find this article on <a href="https://github.com/ronaldschlenker/applied_fsharp_challenge">GitHub</a>.</p>
+    <p><a href="http://binarygears.de/impressum">Impressum</a></p>
+    <p>(c) Ronald Schlenker, May 2019</p>
+    <hr />
+</div>
+<h1>Digital Signal Processing with F#</h1>
 <p>Making music with the help of computers is not new. It started with the <a href="https://en.wikipedia.org/wiki/MUSIC-N">MUSIC/MUSIC-N</a> language family, which was already capable of synthesizing sounds, back in the 1950s. There are a lot of graphic tools like <a href="https://puredata.info/">PureData</a>, with which the user can put together signal flows by dragging predefined objects onto a canvas and connecting their inputs/outputs. Some tools focus on controlling, composition and live performance, like <a href="https://sonic-pi.net/">Sonic PI</a> or <a href="https://tidalcycles.org/index.php/Welcome">Tidal</a>, while others can do both, like <a href="https://supercollider.github.io/">SuperCollider</a>. Other languages and tools incorporate interesting concepts to make working with (audio and control) signals easy, like <a href="http://chuck.cs.princeton.edu/">ChucK</a>, which has an interesting way of dealing with time. There is the <a href="https://faust.grame.fr/">FAUST</a> language that makes use of a pure function composition concept quite similar to Haskell's <a href="https://en.wikibooks.org/wiki/Haskell/Understanding_arrows">Arrows</a>. And of course, with the widely used multiparadigm languages like C or C++, the user can do basically everything, as long as he or she knows how to do it. There is way more interesting stuff out there, such as the JavaScript library <a href="http://www.charlie-roberts.com/genish/">genish.js / gibberish</a>, which aims to provide ways by which a user can define a syntax tree that is translated into high performance code.</p>
 <p>Because developing software is my profession and my hobby, I wanted to understand why there are so many different tools and languages out there. I started my own work in C#, since this is the main language I work in, with a focus on sample-based generation and processing of audio signals (the code is available <a href="https://archive.codeplex.com/?p=byond">here</a>, but it is not maintained anymore). But I soon began to realize that there are disadvantages: I had to deal with aspects that had nothing to do with describing signal flows, and I had to write a lot more boilerplate code. That all smelled like <a href="https://en.wikipedia.org/wiki/No_Silver_Bullet">accidental complexity</a>, and I asked myself how I could find abstractions that would help me write code that was readable and understandable, and that focused solely on signal processing.</p>
 <p>After evaluating several languages, I decided to use F#, mainly due to its "in-built" flexibility without dealing with macros or other hardcore meta programming techniques or compiler hooks (although I find them very interesting). Also, I'm quite familiar with .NET, but that turned out to be not important at all. One thing I can state is that I learned a lot, and I have never regretted my choice to use F#.</p>
@@ -1253,7 +1259,7 @@ Parallel composition does not necessarily mean that branches are executed in par
 <span class="c">// Result: [1.0; 40.0; 3.0; 80.0; 5.0; 120.0; 7.0; 160.0; 9.0; 200.0]</span>
 
 
-<span class="c">// Hint: use map and apply also work inside a block computation expression</span>
+<span class="c">// Hint: map and apply also work inside a block computation expression</span>
 <span class="id">block</span> <span class="pn">{</span>
     <span class="k">let!</span> <span onmouseout="hideTip(event, 'fs118', 859)" onmouseover="showTip(event, 'fs118', 859)" class="id">result</span> <span class="o">=</span> <span class="id">toggleAB</span> <span class="o">&lt;!&gt;</span> <span class="pn">(</span><span class="id">counter</span> <span class="n">0.0</span> <span class="n">1.0</span><span class="pn">)</span> <span class="o">&lt;*&gt;</span> <span class="pn">(</span><span class="id">counter</span> <span class="n">0.0</span> <span class="n">20.0</span><span class="pn">)</span>
     <span class="k">return</span> <span onmouseout="hideTip(event, 'fs118', 860)" onmouseover="showTip(event, 'fs118', 860)" class="id">result</span>
