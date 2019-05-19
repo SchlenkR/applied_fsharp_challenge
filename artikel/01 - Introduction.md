@@ -1,7 +1,5 @@
 
-## Introduction
-
-### Motivation
+# Digital Signal Processing with F#
 
 Making music with the help of computers is not new. It started with the [MUSIC/MUSIC-N](https://en.wikipedia.org/wiki/MUSIC-N) language family, which was already capable of synthesizing sounds, back in the 1950s. There are a lot of graphic tools like [PureData](https://puredata.info/), with which the user can put together signal flows by dragging predefined objects onto a canvas and connecting their inputs/outputs. Some tools focus on controlling, composition and live performance, like [Sonic PI](https://sonic-pi.net/) or [Tidal](https://tidalcycles.org/index.php/Welcome), while others can do both, like [SuperCollider](https://supercollider.github.io/). Other languages and tools incorporate interesting concepts to make working with (audio and control) signals easy, like [ChucK](http://chuck.cs.princeton.edu/), which has an interesting way of dealing with time. There is the [FAUST](https://faust.grame.fr/) language that makes use of a pure function composition concept quite similar to Haskell's [Arrows](https://en.wikibooks.org/wiki/Haskell/Understanding_arrows). And of course, with the widely used multiparadigm languages like C or C++, the user can do basically everything, as long as he or she knows how to do it. There is way more interesting stuff out there, such as the JavaScript library [genish.js / gibberish](http://www.charlie-roberts.com/genish/), which aims to provide ways by which a user can define a syntax tree that is translated into high performance code.
 
@@ -9,9 +7,14 @@ Because developing software is my profession and my hobby, I wanted to understan
 
 After evaluating several languages, I decided to use F#, mainly due to its "in-built" flexibility without dealing with macros or other hardcore meta programming techniques or compiler hooks (although I find them very interesting). Also, I'm quite familiar with .NET, but that turned out to be not important at all. One thing I can state is that I learned a lot, and I have never regretted my choice to use F#.
 
-### What is DSP?
+## Table of Contents
 
-#### A Brief Definition
+<div id="toc">
+</div>
+
+## Introduction
+
+### What is DSP?
 
 In the analog world, physical quantities like electric currency are used to represent a signal that is finally sent to a speaker. These quantities are created and altered by low-level components like condensers, resistors, magnetic coils, transistors, and diods, which are connected to each others in circuits. They are composed in larger components like operational amplifiers that are used to build modules like filters and oscillators, which synthesizers and effect processors are made of. Digital audio signal processing (Audio DSP) is about modeling these components at different levels of abstraction, resulting in the simulation of circuits similar to their analog counterparts (of course, there is no limit to creating completely new forms of synthesizers and effects).
 
@@ -94,17 +97,17 @@ I recommend an easy setup consisting of the following tools.
 
 * **Visual Studio Code**
   
-VS Code is a lightweight and free to use editor. Get it [here](https://code.visualstudio.com/)!
+  VS Code is a lightweight and free to use editor. Get it [here](https://code.visualstudio.com/)!
 
 * **Ionide**
   
-Ionide is a VS Code package suite for cross platform F# development. You can get it [here](http://ionide.io/).
+  Ionide is a VS Code package suite for cross platform F# development. You can get it [here](http://ionide.io/).
 
-On the Ionide homepage, you can see how to install F# for your platform (macOS, Windows, Linux).
+  On the Ionide homepage, you can see how to install F# for your platform (macOS, Windows, Linux).
 
 * **F# Interactive**
-
-I recommend making yourself familiar with the concept of _interactive development_, which is called "F# Interactive". It is a playground for evaluating code snippets that are built upon each other, without setting up a whole development project. The concept and tools are well explained in the reference list above. Using VS Code and Ionide, you have everything you need to get started immediately.
+  
+  I recommend making yourself familiar with the concept of _interactive development_, which is called "F# Interactive". It is a playground for evaluating code snippets that are built upon each other, without setting up a whole development project. The concept and tools are well explained in the reference list above. Using VS Code and Ionide, you have everything you need to get started immediately.
 
 #### Article Sources
 

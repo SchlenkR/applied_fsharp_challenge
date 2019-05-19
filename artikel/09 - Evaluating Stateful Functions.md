@@ -35,6 +35,7 @@ let blendedDistortion drive input = patch {
     let! fadedIn = mixed |> fadeIn 0.1            // fadeIn has float as state
     let gained = amp 0.5 fadedIn
     return gained                                 // return (which is returnB) has unit as state
+}
 ```
 
 The F# compiler understands how the state of the whole computation has to look like just by "looking" at how the computation is defined. There is no explicit type annotation needed that would be given by the user (that would be a show stopper). It is all inferred for the user by the F# compiler.

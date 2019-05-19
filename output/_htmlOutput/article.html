@@ -4,17 +4,17 @@
 <head>
   <meta charset="utf-8">
   <!--
-      The Digital Signal Processing with F# (in the Domain of Audio and Music)
+      The Digital Signal Processing with F#
  parameters will be replaced with the
       document title extracted from the <h1> element or
       file name, if there is no <h1> heading
     -->
-  <title>Digital Signal Processing with F# (in the Domain of Audio and Music)
+  <title>Digital Signal Processing with F#
 </title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <script src="http://code.jquery.com/jquery-1.8.0.js"></script>
-  <script src="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/js/bootstrap.min.js"></script>
+  <!-- <script src="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/js/bootstrap.min.js"></script> -->
   <!-- <script type="text/javascript"
     src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script> -->
 
@@ -23,7 +23,8 @@
   <link type="text/css" rel="stylesheet" href="content/custom_style.css" />
 
   <script src="content/tips.js" type="text/javascript"></script>
-
+  <script src="content/jquery.toc.min.js" type="text/javascript"></script>
+  
   <script>
     $(document).ready(function () {
       $('hint').prepend("<p><b>Hint</b></p>");
@@ -31,34 +32,18 @@
         var name = $(this).data('name');
         $(this).prepend("<p><b>Excurs: " + name + "</b></p>");
       });
+      $('#toc').initTOC({
+          // headers selector
+          selector: 'h1, h2, h3, h4, h5, h6',
+          // selector to specify elements search scope
+          scope: 'body',
+          // whether to overwrite existed headers' id
+          overwrite: false,
+          // string to prepend to id/href property
+          prefix: 'toc'
+        });
     });
 
-    $(document).ready(function () {
-      $(tocList).empty();
-
-      var prevH2Item = null;
-      var prevH2List = null;
-
-      var index = 0;
-      $("h2, h3").each(function () {
-
-        //insert an anchor to jump to, from the TOC link.            
-        var anchor = "<a name='" + index + "'></a>";
-        $(this).before(anchor);
-
-        var li = "<li><a href='#" + index + "'>" + $(this).text() + "</a></li>";
-
-        if ($(this).is("h2")) {
-          prevH2List = $("<ul></ul>");
-          prevH2Item = $(li);
-          prevH2Item.append(prevH2List);
-          prevH2Item.appendTo("#tocList");
-        } else {
-          prevH2List.append(li);
-        }
-        index++;
-      });
-    }); 
   </script>
 
   <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
@@ -73,18 +58,15 @@
     <div class="row" style="margin-top:30px">
       <div class="span1"></div>
       <div class="span10" id="main">
-        <h1>Digital Signal Processing with F# (in the Domain of Audio and Music)</h1>
-<div id="tocDiv">
-    <ul id="tocList">
-    </ul>
-</div>
-<h2>Introduction</h2>
-<h3>Motivation</h3>
+        <h1>Digital Signal Processing with F#</h1>
 <p>Making music with the help of computers is not new. It started with the <a href="https://en.wikipedia.org/wiki/MUSIC-N">MUSIC/MUSIC-N</a> language family, which was already capable of synthesizing sounds, back in the 1950s. There are a lot of graphic tools like <a href="https://puredata.info/">PureData</a>, with which the user can put together signal flows by dragging predefined objects onto a canvas and connecting their inputs/outputs. Some tools focus on controlling, composition and live performance, like <a href="https://sonic-pi.net/">Sonic PI</a> or <a href="https://tidalcycles.org/index.php/Welcome">Tidal</a>, while others can do both, like <a href="https://supercollider.github.io/">SuperCollider</a>. Other languages and tools incorporate interesting concepts to make working with (audio and control) signals easy, like <a href="http://chuck.cs.princeton.edu/">ChucK</a>, which has an interesting way of dealing with time. There is the <a href="https://faust.grame.fr/">FAUST</a> language that makes use of a pure function composition concept quite similar to Haskell's <a href="https://en.wikibooks.org/wiki/Haskell/Understanding_arrows">Arrows</a>. And of course, with the widely used multiparadigm languages like C or C++, the user can do basically everything, as long as he or she knows how to do it. There is way more interesting stuff out there, such as the JavaScript library <a href="http://www.charlie-roberts.com/genish/">genish.js / gibberish</a>, which aims to provide ways by which a user can define a syntax tree that is translated into high performance code.</p>
 <p>Because developing software is my profession and my hobby, I wanted to understand why there are so many different tools and languages out there. I started my own work in C#, since this is the main language I work in, with a focus on sample-based generation and processing of audio signals (the code is available <a href="https://archive.codeplex.com/?p=byond">here</a>, but it is not maintained anymore). But I soon began to realize that there are disadvantages: I had to deal with aspects that had nothing to do with describing signal flows, and I had to write a lot more boilerplate code. That all smelled like <a href="https://en.wikipedia.org/wiki/No_Silver_Bullet">accidental complexity</a>, and I asked myself how I could find abstractions that would help me write code that was readable and understandable, and that focused solely on signal processing.</p>
 <p>After evaluating several languages, I decided to use F#, mainly due to its "in-built" flexibility without dealing with macros or other hardcore meta programming techniques or compiler hooks (although I find them very interesting). Also, I'm quite familiar with .NET, but that turned out to be not important at all. One thing I can state is that I learned a lot, and I have never regretted my choice to use F#.</p>
+<h2>Table of Contents</h2>
+<div id="toc">
+</div>
+<h2>Introduction</h2>
 <h3>What is DSP?</h3>
-<h4>A Brief Definition</h4>
 <p>In the analog world, physical quantities like electric currency are used to represent a signal that is finally sent to a speaker. These quantities are created and altered by low-level components like condensers, resistors, magnetic coils, transistors, and diods, which are connected to each others in circuits. They are composed in larger components like operational amplifiers that are used to build modules like filters and oscillators, which synthesizers and effect processors are made of. Digital audio signal processing (Audio DSP) is about modeling these components at different levels of abstraction, resulting in the simulation of circuits similar to their analog counterparts (of course, there is no limit to creating completely new forms of synthesizers and effects).</p>
 <h4>Quantization of Time and Values</h4>
 <p>Digital signal processing - in contrast to analog signal processing - deals with quantized values over a discrete time. Consider, for instance, an analog synthesizer. It creates and outputs a signal based on electric currency, which is continuous from a physical point of view. A computer cannot process values in a continuous way - it has to <em>quantize</em> two things:</p>
@@ -135,18 +117,20 @@
 <p>A lot of code is presented in this article. Since no one has to believe that the things I'm telling here are true, you can easily reproduce and comprehend them by your own.</p>
 <p>I recommend an easy setup consisting of the following tools.</p>
 <ul>
-<li><strong>Visual Studio Code</strong></li>
-</ul>
+<li>
+<p><strong>Visual Studio Code</strong></p>
 <p>VS Code is a lightweight and free to use editor. Get it <a href="https://code.visualstudio.com/">here</a>!</p>
-<ul>
-<li><strong>Ionide</strong></li>
-</ul>
+</li>
+<li>
+<p><strong>Ionide</strong></p>
 <p>Ionide is a VS Code package suite for cross platform F# development. You can get it <a href="http://ionide.io/">here</a>.</p>
 <p>On the Ionide homepage, you can see how to install F# for your platform (macOS, Windows, Linux).</p>
-<ul>
-<li><strong>F# Interactive</strong></li>
-</ul>
+</li>
+<li>
+<p><strong>F# Interactive</strong></p>
 <p>I recommend making yourself familiar with the concept of <em>interactive development</em>, which is called "F# Interactive". It is a playground for evaluating code snippets that are built upon each other, without setting up a whole development project. The concept and tools are well explained in the reference list above. Using VS Code and Ionide, you have everything you need to get started immediately.</p>
+</li>
+</ul>
 <h4>Article Sources</h4>
 <p>There is a <a href="https://github.com/ronaldschlenker/challenge">github repository</a> that you can clone (or view online) with all the samples included.</p>
 <p>Now you are equipped with everything you need, so let's get our hands into it!</p>
@@ -217,18 +201,20 @@ Note that in the block diagram, we assume all input parameters of a block as cur
 <span class="k">let</span> <span onmouseout="hideTip(event, 'fs17', 63)" onmouseover="showTip(event, 'fs17', 63)" class="fn">distort3</span> <span onmouseout="hideTip(event, 'fs11', 64)" onmouseover="showTip(event, 'fs11', 64)" class="id">drive</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs9', 65)" onmouseover="showTip(event, 'fs9', 65)" class="fn">amp</span> <span onmouseout="hideTip(event, 'fs11', 66)" onmouseover="showTip(event, 'fs11', 66)" class="id">drive</span> <span class="o">&gt;</span><span class="pn">&gt;</span> <span onmouseout="hideTip(event, 'fs5', 67)" onmouseover="showTip(event, 'fs5', 67)" class="fn">limit</span> <span class="n">1.0</span>
 </code></pre>
 <ol>
-<li><strong>Inline the expressions</strong></li>
-</ol>
+<li>
+<p><strong>Inline the expressions</strong></p>
 <p>This is a bit sad because the signal flow is reversed: it is written limit, then amp. But the order of evaluation is amp, then limit. To make our code look more like the actual signal flow, we can use:</p>
-<ol>
-<li><strong>Pipe operator</strong></li>
-</ol>
+</li>
+<li>
+<p><strong>Pipe operator</strong></p>
 <p>The pipe operator is explained <a href="https://fsharpforfunandprofit.com/posts/function-composition/">here</a> and basically boils down to this: it takes the value on the left side (in our case, it's a function that gets evaluated before the result gets piped) and feeds it to the function on the right side.</p>
 <p>Now, having this in mind, remember the previous chapter, when I stated that currying is very important. Now we can see why: we said that we are interested in functions of form <code>float -&gt; float</code>, and now it's clear why: it enables us to compose functions always in the same manner. But when we review our <code>amp</code> function (and also the limit function), we see that they are <code>float -&gt; float -&gt; float</code>. This is because they not only transform an input value into an output value, but they also require an additional parameter to control their behavior. This is important: we have to design our "factory functions" (curried functions) so that all parameters come first and then are followed by the input value to have a <code>float -&gt; float</code> function at the end that can easily be composed. When things get more complex in the next section, the technique of currying will help us a lot.</p>
-<ol>
-<li><strong>Forward Composition Operator</strong></li>
-</ol>
+</li>
+<li>
+<p><strong>Forward Composition Operator</strong></p>
 <p>This is a nice way of composition because it is just a "construction manual" for a signal flow. Neither of the two given functions is evaluated at all. The two functions are just combined to a bigger one and evaluated only when used.</p>
+</li>
+</ol>
 <p>In the following code samples, we will use all these composition techniques, depending on the use case. There is no "right or wrong," just a "better fit in this case" or even just a user's preference.</p>
 </excurs>
 <h3>Parallel Composition (Branch and Merge)</h3>
@@ -778,6 +764,7 @@ Parallel composition does not necessarily mean that branches are executed in par
     <span class="k">let!</span> <span onmouseout="hideTip(event, 'fs30', 667)" onmouseover="showTip(event, 'fs30', 667)" class="id">fadedIn</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs23', 668)" onmouseover="showTip(event, 'fs23', 668)" class="id">mixed</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs26', 669)" onmouseover="showTip(event, 'fs26', 669)" class="fn">fadeIn</span> <span class="n">0.1</span>            <span class="c">// fadeIn has float as state</span>
     <span class="k">let</span> <span onmouseout="hideTip(event, 'fs27', 670)" onmouseover="showTip(event, 'fs27', 670)" class="id">gained</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs9', 671)" onmouseover="showTip(event, 'fs9', 671)" class="fn">amp</span> <span class="n">0.5</span> <span onmouseout="hideTip(event, 'fs30', 672)" onmouseover="showTip(event, 'fs30', 672)" class="id">fadedIn</span>
     <span class="k">return</span> <span onmouseout="hideTip(event, 'fs27', 673)" onmouseover="showTip(event, 'fs27', 673)" class="id">gained</span>                                 <span class="c">// return (which is returnB) has unit as state</span>
+<span class="pn">}</span>
 </code></pre>
 <p>The F# compiler understands how the state of the whole computation has to look like just by "looking" at how the computation is defined. There is no explicit type annotation needed that would be given by the user (that would be a show stopper). It is all inferred for the user by the F# compiler.</p>
 <p>But our goal was to evaluate the computation for a given set of input values. To achieve that, we have to evaluate the <code>Block</code> function that we get from blendedDistortion. Let's have a look at the <code>Block</code> type again:</p>
@@ -1039,7 +1026,6 @@ Parallel composition does not necessarily mean that branches are executed in par
 <p><img src="./chart_mix_fadeIn.png" alt="Mix &lt;-&gt; Fade In" /></p>
 <p><strong>Plausibility:</strong></p>
 <p>We analyzed fadeIn before, when we looked at evaluating blocks. We saw that the state value increased by the given step size of 0.1 every cycle. That was the inner view - we couldn't check whether the final calculation was correct. Now we can. The input of fadeIn (which is the "mix" value) has to be multiplied by the corresponding state value <code>[ 0; 0.1; 0.2 ;...]</code>. Now, believe it or not, I double checked all the values, and the assumption is true! (I'm happy if you do not believe me and check the facts on your own - it's easy).</p>
-<p><img src="./calculator.png" alt="Doublechecking Fade In" /></p>
 <h3>Gain</h3>
 <p>Now the output gain stage:</p>
 <pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="id">finalChart</span> <span class="o">=</span>
@@ -1064,16 +1050,19 @@ Parallel composition does not necessarily mean that branches are executed in par
 <pre class="fssnip highlighted"><code lang="fsharp"><span class="pn">[</span> <span class="id">inputChart</span><span class="pn">;</span> <span class="id">finalChart</span> <span class="pn">]</span> <span class="o">|&gt;</span> <span class="id">showAll</span>
 </code></pre>
 <p><img src="./chart_final.png" alt="Final" /></p>
+<h2>Conclusion</h2>
+<p>I hope you enjoyed reading this article and learned something from it. We have seen that it is possible to treat stateful functions like pure functions by introducing a powerful function composition technique, and that the F# language has syntax support for it. Since the concept behind this technique is so general, it can be applied to different domains, like list processing, asynchronous programming, observables, error handling, and a lot more. While other languages often need to support those domains explicitly by introducing new language features (I remind of C#'s async/await), in F#, it is possible to implement a library that provides convenience to the user and leaving the language untouched and concise.</p>
+<p>I would be very happy to get feedback from you. You can get in touch with me on twitter (@SchlenkR), and I am looking forward for interesting discussions.</p>
+<p>Since the core concepts are now covered, I suggest having a look at the appendix if you want to dig deeper and see how other general functional concepts can be "mapped and applied" to the domain of digital signal processing.</p>
+<p>Thank you very much for taking your time and reading this article.</p>
 <h2>Appendix</h2>
 <p>In this section, some more concepts are covered in a loose and very brief way.</p>
-<h3>Appendix I - Feedback</h3>
+<h3>Feedback</h3>
 <hint>
 <p>See [src/8_Feedback.fsx] as sample source.</p>
 </hint>
 <p>Since we can do serial and parallel composition and we have a way for blocks to keep local state, one thing is missing: making a past value from inside of a computation available in the next cycle.</p>
 <p>This can sometimes be done by extracting a "closed loop" in a sub-block, but when a past value from inside of a computation is needed in more than one position, this won't work.</p>
-<p>Here is a block diagram explaining this:</p>
-<p>// TODO: Blockschaltbild Feedback</p>
 <p>Achieving this with the <code>block { ... }</code> syntax is not easy. Although we could emit a result at the end of the computation, there would be no direct way of accessing it as state in the next cycle. The state that is collected inside the <code>block { ... }</code> is not accessible to the user.</p>
 <p>But there is a solution: feedback!</p>
 <pre class="fssnip highlighted"><code lang="fsharp"><span class="k">type</span> <span class="id">Fbd</span><span class="pn">&lt;</span><span class="id">&#39;</span><span class="id">fbdValue</span><span class="pn">,</span> <span class="id">&#39;</span><span class="id">value</span><span class="pn">&gt;</span> <span class="o">=</span> <span class="pn">{</span> <span class="id">feedback</span><span class="pn">:</span> <span class="id">&#39;</span><span class="id">fbdValue</span><span class="pn">;</span> <span class="id">out</span><span class="pn">:</span> <span class="id">&#39;</span><span class="id">value</span> <span class="pn">}</span>
@@ -1130,7 +1119,7 @@ Parallel composition does not necessarily mean that branches are executed in par
             <span class="k">return</span> <span class="pn">{</span> <span class="id">out</span><span class="o">=</span><span class="id">lp</span><span class="pn">;</span> <span class="id">feedback</span><span class="o">=</span><span class="id">amped</span> <span class="pn">}</span>
         <span class="pn">}</span>
 </code></pre>
-<h3>Appendix II - Arithmetic operators</h3>
+<h3>Arithmetic operators</h3>
 <hint>
 <p>See [src/9_Arithmetic.fsx] as sample source.</p>
 </hint>
@@ -1181,7 +1170,7 @@ Parallel composition does not necessarily mean that branches are executed in par
 
 <span class="k">let</span> <span class="k">inline</span> <span class="pn">(</span><span class="o">+</span><span class="pn">)</span> <span class="id">a</span> <span class="id">b</span> <span class="o">=</span> <span class="pn">(</span><span class="o">?&lt;-</span><span class="pn">)</span> <span class="id">ArithmeticExt</span> <span class="id">a</span> <span class="id">b</span>
 </code></pre>
-<h3>Appendix III - Modulation ("map" and "apply")</h3>
+<h3>Modulation ("map" and "apply")</h3>
 <hint>
 <p>See [src/10<em>Modulation</em>with<em>map</em>and_apply.fsx] as sample source.</p>
 </hint>
@@ -1272,7 +1261,7 @@ Parallel composition does not necessarily mean that branches are executed in par
 <span class="o">|&gt;</span> <span class="id">evaluateGen</span>
 <span class="c">// Result: [1.0; 40.0; 3.0; 80.0; 5.0; 120.0; 7.0; 160.0; 9.0; 200.0]</span>
 </code></pre>
-<h3>Appendix IV - OSS Experimental Project</h3>
+<h3>OSS Experimental Project</h3>
 <p>The basis for this article is an experimental OSS project I started a year ago. It is called FluX (it was called FLooping before, and I will probably change the name again). You can find the project on <a href="https://github.com/ronaldschlenker/FluX">Github</a>.</p>
 <h4>Playing Audio</h4>
 <p>Unfortunately, this topic is not covered in this article. So I suggest you have a look at FluX:</p>

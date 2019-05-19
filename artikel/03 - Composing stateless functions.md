@@ -38,17 +38,17 @@ let distort3 drive = amp drive >> limit 1.0
 
 1. **Inline the expressions**
    
-This is a bit sad because the signal flow is reversed: it is written limit, then amp. But the order of evaluation is amp, then limit. To make our code look more like the actual signal flow, we can use:
+   This is a bit sad because the signal flow is reversed: it is written limit, then amp. But the order of evaluation is amp, then limit. To make our code look more like the actual signal flow, we can use:
 
 2. **Pipe operator**
    
-The pipe operator is explained [here](https://fsharpforfunandprofit.com/posts/function-composition/) and basically boils down to this: it takes the value on the left side (in our case, it's a function that gets evaluated before the result gets piped) and feeds it to the function on the right side.
+   The pipe operator is explained [here](https://fsharpforfunandprofit.com/posts/function-composition/) and basically boils down to this: it takes the value on the left side (in our case, it's a function that gets evaluated before the result gets piped) and feeds it to the function on the right side.
 
-Now, having this in mind, remember the previous chapter, when I stated that currying is very important. Now we can see why: we said that we are interested in functions of form ```float -> float```, and now it's clear why: it enables us to compose functions always in the same manner. But when we review our `amp` function (and also the limit function), we see that they are ```float -> float -> float```. This is because they not only transform an input value into an output value, but they also require an additional parameter to control their behavior. This is important: we have to design our "factory functions" (curried functions) so that all parameters come first and then are followed by the input value to have a ```float -> float``` function at the end that can easily be composed. When things get more complex in the next section, the technique of currying will help us a lot.
+   Now, having this in mind, remember the previous chapter, when I stated that currying is very important. Now we can see why: we said that we are interested in functions of form ```float -> float```, and now it's clear why: it enables us to compose functions always in the same manner. But when we review our `amp` function (and also the limit function), we see that they are ```float -> float -> float```. This is because they not only transform an input value into an output value, but they also require an additional parameter to control their behavior. This is important: we have to design our "factory functions" (curried functions) so that all parameters come first and then are followed by the input value to have a ```float -> float``` function at the end that can easily be composed. When things get more complex in the next section, the technique of currying will help us a lot.
 
-1. **Forward Composition Operator**
-   
-This is a nice way of composition because it is just a "construction manual" for a signal flow. Neither of the two given functions is evaluated at all. The two functions are just combined to a bigger one and evaluated only when used.
+3. **Forward Composition Operator**
+  
+  This is a nice way of composition because it is just a "construction manual" for a signal flow. Neither of the two given functions is evaluated at all. The two functions are just combined to a bigger one and evaluated only when used.
 
 In the following code samples, we will use all these composition techniques, depending on the use case. There is no "right or wrong," just a "better fit in this case" or even just a user's preference.
 

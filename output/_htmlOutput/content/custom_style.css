@@ -1,37 +1,46 @@
 
+.container {
+    width: 800px;
+    margin: auto;
+}
+
 statement {
     display: block;
     padding: 10px;
     margin: 10px 0;
-    border: 1px solid gray;
+    border: 1px solid darkslategray;
     text-align: center;
     font-weight: bold;
     font-size: 0.9em;
-    background-color: lightgray;
+    background-color: #ff6f69;
 }
 
 hint {
     display: block;
     padding: 10px;
-    margin: 10px 0;
+    margin: 20px 0;
     font-style: italic;
     font-size: 0.9em;
     text-align: center;
-    background-color: lightcyan;
+    background-color: #ffeead;
     color: darkslategray;
+    border-radius: 10px;
 }
 
 excurs {
     display: block;
     padding: 15px;
-    margin: 10px 0;
+    margin: 20px 0;
     border: 1px 0 solid black;
-    background-color: lightskyblue;
+    background-color: #ffcc5c;
     color: darkslategray;
+    border-radius: 10px;
 }
 
 code:not([lang]) {
-    background: lightblue;
+    background: #88d8b0;
+    font-size: 0.9em;
+    padding: 2px 4px;
 }
 
 img {
@@ -51,7 +60,7 @@ img[src*="bs_block_with_state"] {
     width: 50%;
 }
 img[src*="calculator"] {
-    width: 60%;
+    width: 20%;
 }
 
 .col-2 {
@@ -59,22 +68,16 @@ img[src*="calculator"] {
     column-gap: 0;
     column-rule: none;
 } 
-
 .col-2 pre {
     margin-top: 0;
     margin-left: 0;
     margin-right: 0;
 } 
-
 .col-2 pre code span {
     font-size: 0.95em;
     line-height: 0.95em;
 } 
 
-.container {
-    width: 800px;
-    margin: auto;
-}
 
 /* Numbered Headings  */
   

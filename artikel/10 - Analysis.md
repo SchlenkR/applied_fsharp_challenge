@@ -145,8 +145,6 @@ let mixedFadeInChart =
 
 We analyzed fadeIn before, when we looked at evaluating blocks. We saw that the state value increased by the given step size of 0.1 every cycle. That was the inner view - we couldn't check whether the final calculation was correct. Now we can. The input of fadeIn (which is the "mix" value) has to be multiplied by the corresponding state value ` [ 0; 0.1; 0.2 ;...] `. Now, believe it or not, I double checked all the values, and the assumption is true! (I'm happy if you do not believe me and check the facts on your own - it's easy).
 
-![Doublechecking Fade In](./calculator.png)
-
 ### Gain
 
 Now the output gain stage:

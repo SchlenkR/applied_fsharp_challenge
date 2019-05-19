@@ -4,7 +4,7 @@
 In this section, some more concepts are covered in a loose and very brief way.
 
 
-### Appendix I - Feedback
+### Feedback
 
 <hint>
 
@@ -15,10 +15,6 @@ See [src/8_Feedback.fsx] as sample source.
 Since we can do serial and parallel composition and we have a way for blocks to keep local state, one thing is missing: making a past value from inside of a computation available in the next cycle.
 
 This can sometimes be done by extracting a "closed loop" in a sub-block, but when a past value from inside of a computation is needed in more than one position, this won't work.
-
-Here is a block diagram explaining this:
-
-// TODO: Blockschaltbild Feedback
 
 Achieving this with the `block { ... }` syntax is not easy. Although we could emit a result at the end of the computation, there would be no direct way of accessing it as state in the next cycle. The state that is collected inside the `block { ... }` is not accessible to the user.
 
@@ -92,7 +88,7 @@ let myFxWithFeedback input =
 
 
 
-### Appendix II - Arithmetic operators
+### Arithmetic operators
 
 <hint>
 
@@ -164,7 +160,7 @@ let inline (+) a b = (?<-) ArithmeticExt a b
 
 
 
-### Appendix III - Modulation ("map" and "apply")
+### Modulation ("map" and "apply")
 
 <hint>
 
@@ -284,7 +280,7 @@ block {
 
 
 
-### Appendix IV - OSS Experimental Project
+### OSS Experimental Project
 
 The basis for this article is an experimental OSS project I started a year ago. It is called FluX (it was called FLooping before, and I will probably change the name again). You can find the project on [Github](https://github.com/ronaldschlenker/FluX).
 
@@ -299,3 +295,22 @@ Unfortunately, this topic is not covered in this article. So I suggest you have 
 
 For real-world audio applications, it is necessary to access some "global" values like the current sample rate or the position in a song for an evaluation cycle. In FluX, this is done by extending `Block` with the capability of what is called `reader`. This makes it possible to the `Block` author to access these "environmental" values inside of a `Block` function. This is simply done by passing another parameter besides state to the `Block` function.
 
+
+
+### Nesting Blocks
+
+It is also possible to nest blocks inline.
+
+```fsharp
+block {
+    let! added = block {
+        let! count1 = counter 0.0 1.0
+        let! count2 = counter 0.0 2.0
+        let! result = toggleAB count1 count2
+        return result
+    }
+
+    let! whatever = counter 0.0 added
+    return whatever
+}
+```
