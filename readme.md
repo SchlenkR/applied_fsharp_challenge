@@ -1,9 +1,13 @@
 
 This is the repository containing the article and the samples / code sources of my "Applied F# Challenge" submission.
 
-## Frozen Version
+## Readable Version
 
-Please use the release tag of this repository.
+You can find the final article [here](http://binarygears.de/AppliedFSharpChallenge/Digital_Signal_Processing_with_FSharp.html).
+
+## Tagged Version
+
+Please use the tag **contribution** of this repository to get the version that was used for the challenge.
 
 ## Structure
 
