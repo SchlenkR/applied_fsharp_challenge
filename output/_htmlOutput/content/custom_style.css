@@ -4,6 +4,14 @@
     margin: auto;
 }
 
+#toc > ol {
+    padding-left: 20px;
+}
+
+#toc > ol > li {
+    list-style-type: none;
+}
+
 statement {
     display: block;
     padding: 10px;
