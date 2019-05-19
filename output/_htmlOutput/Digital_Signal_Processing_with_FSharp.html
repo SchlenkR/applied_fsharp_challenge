@@ -1271,6 +1271,20 @@ Parallel composition does not necessarily mean that branches are executed in par
 </ul>
 <h4>Reader State</h4>
 <p>For real-world audio applications, it is necessary to access some "global" values like the current sample rate or the position in a song for an evaluation cycle. In FluX, this is done by extending <code>Block</code> with the capability of what is called <code>reader</code>. This makes it possible to the <code>Block</code> author to access these "environmental" values inside of a <code>Block</code> function. This is simply done by passing another parameter besides state to the <code>Block</code> function.</p>
+<h3>Nesting Blocks</h3>
+<p>It is also possible to nest blocks inline.</p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="id">block</span> <span class="pn">{</span>
+    <span class="k">let!</span> <span class="id">added</span> <span class="o">=</span> <span class="id">block</span> <span class="pn">{</span>
+        <span class="k">let!</span> <span class="id">count1</span> <span class="o">=</span> <span class="id">counter</span> <span class="n">0.0</span> <span class="n">1.0</span>
+        <span class="k">let!</span> <span class="id">count2</span> <span class="o">=</span> <span class="id">counter</span> <span class="n">0.0</span> <span class="n">2.0</span>
+        <span class="k">let!</span> <span onmouseout="hideTip(event, 'fs118', 861)" onmouseover="showTip(event, 'fs118', 861)" class="id">result</span> <span class="o">=</span> <span class="id">toggleAB</span> <span class="id">count1</span> <span class="id">count2</span>
+        <span class="k">return</span> <span onmouseout="hideTip(event, 'fs118', 862)" onmouseover="showTip(event, 'fs118', 862)" class="id">result</span>
+    <span class="pn">}</span>
+
+    <span class="k">let!</span> <span class="id">whatever</span> <span class="o">=</span> <span class="id">counter</span> <span class="n">0.0</span> <span class="id">added</span>
+    <span class="k">return</span> <span class="id">whatever</span>
+<span class="pn">}</span>
+</code></pre>
 
         <div class="tip" id="fs1">val amp : amount:float -&gt; input:float -&gt; float</div>
 <div class="tip" id="fs2">val amount : float</div>

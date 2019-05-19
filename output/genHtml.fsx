@@ -6,11 +6,15 @@ open FSharp.Formatting.Razor
 open System
 open System.IO
 
+let articleName = "Digital_Signal_Processing_with_FSharp"
+
 let generate() =
-  let sourceDir = __SOURCE_DIRECTORY__ + "\\..\\artikel"
-  let outputDir = __SOURCE_DIRECTORY__ + "\\_htmlOutput"
-  let outputFileName = outputDir + "\\article.html"
-  let mergedFileName = outputDir + "\\_merged.md"
+  let ( </> ) a b = a + "\\" + b
+
+  let sourceDir = __SOURCE_DIRECTORY__ </> ".." </> "artikel"
+  let outputDir = __SOURCE_DIRECTORY__ </> "_htmlOutput"
+  let outputFileName = outputDir </> articleName + ".html"
+  let mergedFileName = outputDir </> articleName + ".md"
 
   // Load the template & specify project information
   let projTemplate = __SOURCE_DIRECTORY__ + "\\template.html"
@@ -45,6 +49,8 @@ let generate() =
   |> Seq.map FileInfo
   |> Seq.iter (fun f -> f.CopyTo (outputDir + "\\" + f.Name) |> ignore)
 
-  File.Delete mergedFileName
+  // File.Delete mergedFileName
+
+  System.Diagnostics.Process.Start outputFileName
 
 generate()

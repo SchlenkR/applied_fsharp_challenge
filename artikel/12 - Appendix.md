@@ -269,7 +269,7 @@ toggleAB <!> (counter 0.0 1.0) <*> (counter 0.0 20.0)
 // Result: [1.0; 40.0; 3.0; 80.0; 5.0; 120.0; 7.0; 160.0; 9.0; 200.0]
 
 
-// Hint: use map and apply also work inside a block computation expression
+// Hint: map and apply also work inside a block computation expression
 block {
     let! result = toggleAB <!> (counter 0.0 1.0) <*> (counter 0.0 20.0)
     return result
