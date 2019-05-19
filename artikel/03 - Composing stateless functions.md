@@ -3,9 +3,9 @@
 
 ### Serial Composition
 
-The `amp` and `limit` functions are so small that we won't break them into smaller pieces for reusing them. They are kind of "atoms" in our context. But of course, we want to do the opposite: Compose them to larger, higher-level functions (that themselves can be composed again to higher-level functions, and so on).
+The `amp` and `limit` functions are so small that we won't break them into smaller pieces to reuse them. They are kind of "atoms" in our context. But of course, we want to do the opposite: to compose them to larger, higher-level functions (that themselves can be composed again to higher-level functions, and so on).
 
-Let's say we want to build some nice distortion effect that is defined in this way:
+Let's say we want to build a nice distortion effect that is defined in this way:
 
 ```fsharp
 let distort drive i =
@@ -22,11 +22,11 @@ We can now visualize this function in a so-called **block diagram**:
 Note that in the block diagram, we assume all input parameters of a block as curried. The parameter order is from bottom to top.
 </hint>
 
-The `drive` parameter controls how much distortion we want: 1 means no distortion, the bigger the value gets means: a lot of distortion. We achieve this by a feeding the input into our amplifier. The output of the amp is then fed into a limiter. Let's call this technique of somposition **serial composition**.
+The `drive` parameter controls how much distortion we want: 1 means no distortion, and the bigger the value gets means a lot of distortion. We achieve this by feeding the input into our amplifier. The output of the amp is then fed into a limiter. Let's call this technique of composition **serial composition**.
 
 <excurs data-name="Composition Alternatives">
 
-We use explicit identifier (`amplified`, `result`) and evaluate our amp and limit functions. This can be a useful technique e.g. when we want to re-use the `amplified` value in a more complex scenario (which we will see shortly). For serial composition, there are alternatives that we can use to make our code more "compact":
+We use an explicit identifier (`amplified`, `result`) and evaluate our amp and limit functions. This can be a useful technique, e.g., when we want to reuse the `amplified` value in a more complex scenario (which we will see shortly). For serial composition, we can use alternatives to make our code more "compact":
 
 ```fsharp
 let distort1 drive input = limit 1.0 (amp drive input)
@@ -35,49 +35,49 @@ let distort2 drive input = amp drive input |> limit 1.0
 
 let distort3 drive = amp drive >> limit 1.0
 ```
-   
+
 1. **Inline the expressions**
    
-   This is a bit sad because the signal flow is reversed: It is written limit, then amp. But the order of evaluation is amp, then limit. To make our code look more like the actual signal flow, we can use:
+This is a bit sad because the signal flow is reversed: it is written limit, then amp. But the order of evaluation is amp, then limit. To make our code look more like the actual signal flow, we can use:
 
 2. **Pipe operator**
    
-   The pipe operator is explained [here](https://fsharpforfunandprofit.com/posts/function-composition/) and dows basically this: It takes tha value on the left side (in our case, it's a function that gets evaluated before the result gets piped) and feeds it to the function on the right side.
+The pipe operator is explained [here](https://fsharpforfunandprofit.com/posts/function-composition/) and basically boils down to this: it takes the value on the left side (in our case, it's a function that gets evaluated before the result gets piped) and feeds it to the function on the right side.
 
-   And now, having this in mind, remember the previous chapter: it was stated that currying is very important. Now we can see why: We said that we are interested in functions of form ```float -> float```, and now it's clear why: It enables us to compose functions in always the same manner. But when we review our `amp` function (and also the limit function), we see that they are ```float -> float -> float```. This is because they not only transform an input value to an output value; they also require an additional parameter to control their behavior. And this is important: We have to design our "factory functions" (curried functions) in a way that all parameters come first, then followed by the input value to have a ```float -> float``` function at the end. When things get more complex in the following section, the technique of currying will help us a lot.
+Now, having this in mind, remember the previous chapter, when I stated that currying is very important. Now we can see why: we said that we are interested in functions of form ```float -> float```, and now it's clear why: it enables us to compose functions always in the same manner. But when we review our `amp` function (and also the limit function), we see that they are ```float -> float -> float```. This is because they not only transform an input value into an output value, but they also require an additional parameter to control their behavior. This is important: we have to design our "factory functions" (curried functions) so that all parameters come first and then are followed by the input value to have a ```float -> float``` function at the end that can easily be composed. When things get more complex in the next section, the technique of currying will help us a lot.
 
-3. **Forward Composition Operator**
+1. **Forward Composition Operator**
    
-   This is a nice way of composition, because it is just a "construction manual" for a signal flow. None of the 2 functions is evaluated at all. The two functions are just combined to a bigger one, and evaluated only when used.
+This is a nice way of composition because it is just a "construction manual" for a signal flow. Neither of the two given functions is evaluated at all. The two functions are just combined to a bigger one and evaluated only when used.
 
-In the following code samples, we will use all of this composition techniques, depending on the use case. So there is no "right or wrong", just a "better fit in this case" or even just a user preference.
+In the following code samples, we will use all these composition techniques, depending on the use case. There is no "right or wrong," just a "better fit in this case" or even just a user's preference.
 
 </excurs>
 
 ### Parallel Composition (Branch and Merge)
 
 <hint>
-Parallel composition doesn't necessarily mean that branches are executed in parallel from a threading / timing point of view. In the case of this article, branches are executed one after another.
+Parallel composition does not necessarily mean that branches are executed in parallel from a threading/timing point of view. In the case of this article, branches are executed one after another.
 </hint>
 
-Now that we understand what serial composition is, we know that it is useful to have functions of type ```float -> float```, and we understand that serial composition of these functions can be done by using the `>>` or `|>` operators.
+Now that we understand what serial composition is, we know it is useful to have functions of type ```float -> float```, and we understand that serial composition of these functions can be done by using the `>>` or `|>` operators.
 
-Let's extend our sample in a way where the techniques of serial composition is not sufficient.
+Let's extend our sample in a way in which the techniques of serial composition is not sufficient.
 
-The distortion effect we just engineered sounds nice, and we want to be able to "blend it in" together with a low pass filtered version of the original signal. Low pass filter means: We want to get rid of the high frequencies and preserve only the low frequencies. And at the end, the whole result shall be faded in over a certain time and gained (amplified). Visualizing this in a block diagram is easy:
+The distortion effect we just engineered sounds nice, and we want to be able to "blend it in" together with a low pass filtered version of the original signal. Low pass filter means we want to get rid of the high frequencies that may sound "harsh", and preserve only the low frequencies. At the end, the whole result will be faded in over a certain time and output-gained (amplified). Visualizing this in a block diagram is easy:
 
 ![Block diagram B](./bs_b.png)
 
-Some things to note on the block diagram:
+Some things to note on the block diagram are:
 
-* The output value of "amp" is used in 2 following branches.
-* The output values of the 2 branches are then aggregated by the "mix" block.
-* The output value can then be processed further by the "fadeIn" block.
-* And finally, we have an output gain to lower the signal's strength.
+* the output value of "amp" is used in two following branches;
+* the output values of the two branches are then aggregated by the "mix" block;
+* the output value can then be processed further by the "fadeIn" block; and
+* we have an output gain to lower the signal's strength.
 
-Now we will look at a technique how we can translate this behavior to F# code: Think about what "branching" means: "Use an evaluated value in more than 1 place in the rest of a computation".
+Now we will look at a technique whereby we can translate this behavior to F# code. Think about what "branching" means: "use an evaluated value in more than one place in the rest of a computation."
 
-As usual, there are a lot of ways to achieve this, and I recommend taking some time and thinking about how this could be done. In our sample, we bind meaningful values to identifiers:
+As usual, there are a lot of ways to achieve this. I recommend taking some time and thinking about how this could be done. In our sample, we bind meaningful values to identifiers:
 
 ```fsharp
 let blendedDistortion drive input =
@@ -90,11 +90,11 @@ let blendedDistortion drive input =
     gained
 ```
 
-By introducing the "amped" identifier, we are able to use it's value in more than one place in the rest of our computation. Merging is nothing more that feeding evaluated branches into an appropriate function. And of course, there are other ways of writing this code.
+By introducing the "amped" identifier, we are able to use its value in more than one place in the rest of our computation. Merging is nothing more than feeding evaluated branches into an appropriate function. Of course, there are other ways of writing this code.
 
 <excurs data-name="Alternatives">
 
-Let's focus on `hardLimited`, `softLimited` and `mixed`:
+Let's focus on `hardLimited,` `softLimited` and `mixed`:
 
 ```fsharp
 let blendedDistortion_Alt1 drive input =
@@ -108,7 +108,7 @@ let blendedDistortion_Alt1 drive input =
     gained
 ```
 
-In this code sample, we didn't use identifiers, but passed the 2 branches directly to the mix function as arguments.
+In this code sample, we didn't use identifiers, but passed the two branches directly to the mix function as arguments.
 
 ```fsharp
 let blendedDistortion_Alt2 drive input =
@@ -124,7 +124,7 @@ let blendedDistortion_Alt2 drive input =
     gained
 ```
 
-There is also the `||>` operator: It takes a tuple (in our case the 2 branches) and feeds it into a 2 curried parameter function (in our case, ```mix 0.5```evaluates to a 2 parameter function).
+There is also the `||>` operator: it takes a tuple (in our case, the two branches) and feeds it into a two-curried parameter function (in our case, `mix 0.5` evaluates to a two-parameter function).
 
 ```fsharp
 // ALt. 2: right-to-left pipe forward operator
@@ -145,7 +145,7 @@ let blendedDistortion_Alt3 drive input =
     gained
 ```
 
-There is also the possibility of defining an own operator: Using the `^` symbol before an operator makes the operator having a right associativity. This means that evaluation is not from left to right, but from right to left. In our case, the ```mix 0.5``` function is evaluated to a 2 parameter function, the the branch `b` is passed to that function (a 1 parameter function remains), and then the branch a is passed to it. Note that (even for `mix` it wouldn't matter) we have to switch the order of arguments (first b, then a) to achieve the same order as in the samples before.
+There is also the possibility of defining an own operator: using the `^` symbol before an operator makes the operator have a right associativity. This means that evaluation is not from left to right, but from right to left. In our case, the `mix 0.5` function is evaluated to a two-parameter function. Branch `b` is passed to that function (a one-parameter function remains), and then branch 'a' is passed to it. Note that (even for `mix,` it wouldn't matter) we have to switch the order of arguments (first b, then a) to achieve the same order as in the previous samples.
 
 You can even test our operator on your own:
 
@@ -161,13 +161,13 @@ let mix4 a b c d = sprintf "%A %A %A %A" a b c d
 // evaluates to: "4.0 3.0 2.0 1.0"
 ```
 
-Note that is not a commor or idiomatic F# way, and I won't use it in the upcoming code samples.
+Note that is not an idiomatic F# way, and I won't use it in the upcoming code samples.
 
 </excurs>
 
-#### A note on "lowPass" and "fadeIn:
+#### A Note on "lowPass" and "fadeIn":
 
-Note that for now, we don't have a low pass filter, so we just use a placeholder function that works like a normal stateless processing function of type `float -> float`:
+Note that for now, we do not have a working low pass filter implementation, so we just use a placeholder function that works like a normal stateless processing function of type `float -> float`:
 
 ```fsharp
 let lowPass frq input : float = input // just a dummy - for now...
@@ -179,9 +179,9 @@ The same is for fadeIn:
 let fadeIn stepSize input : float = input // just a dummy - for now...
 ```
 
-#### A note on "mix":
+#### A Note on "mix":
 
-As we can see, we need a "mix" function that has a `abRatio` parameter to control the amount of both incoming values in the final output. 0 means: only signal a; 1 means: only signal b.
+We need a "mix" function that has a `abRatio` parameter to control the amount of both incoming values in the final output. 0 means only signal a; 1 means only signal b.
 
 The function is this:
 

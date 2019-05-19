@@ -1,24 +1,24 @@
 
 ## Evaluating Stateful Functions
 
-In the previous chapter, we learned that we can compose stateful `Block` functions easily by using the `patch` computation expression and `let!` instead of `let` when we want to bind the output value of a `Block` function to an identifier and use it in the rest of our computation.
+In the previous chapter, we learned that we can compose stateful `Block` functions easily by using the `block` computation expression and `let!` instead of `let` when we want to bind the output value of a `Block` function to an identifier and use it in the rest of our computation.
 
-But at the end, we are not interested in state - we need the pure output values of our computation to send them to the soundcard's buffer. For us, it will be enough just having these values available as sequence.
+But in the end, we are not interested in state - we need the pure output values of our computation to send them to the soundcard's buffer. For us, it will be enough to just have these values available as sequence.
 
 ### The Signature of State
 
-Having a look at the `blendedDistortion` function again, there is an interesting aspect about the signature of it's state:
+Having a look at the final `blendedDistortion` function again, there is an interesting aspect about the signature of its state:
 
 ```fsharp
 // float -> float -> Block<float, float * (float * unit)>
 let blendedDistortion drive input = patch { (*...*) }
 ```
 
-The first 2 floats are drive and input. After applying these, we get a Block that deals with float signal values. It's state signature is then `float * (float * unit)`.
+The first two floats are "drive" and "input". After applying these, we get a `Block` that deals with float signal values. Its state signature is then `float * (float * unit)`.
 
 Where does this come from?
 
-This is the nested tuple that is completely infered from the structure of the `blendedDistortion` computation expression:
+This is the nested tuple that is completely inferred from the structure of the `blendedDistortion` computation expression:
 
 ```fsharp
 let blendedDistortion drive input = patch {
@@ -31,15 +31,15 @@ let blendedDistortion drive input = patch {
     return gained                                 // return (which is returnB) has unit as state
 ```
 
-So the F# compiler understands how the state of the whole computation has to look like, just by "looking" at how the computation is defined. There is no explicit type annotation needed that would be given by the user. It is all infered for the user by the F# compiler.
+The F# compiler understands how the state of the whole computation has to look like just by "looking" at how the computation is defined. There is no explicit type annotation needed that would be given by the user (that would be a show stopper). It is all inferred for the user by the F# compiler.
 
-But our goal was to evaluate the computation for a given set of input values. To achieve that, we have to evaluate the `Block` function that we get from blendedDistortion. So let's have a look at the `Block` type again:
+But our goal was to evaluate the computation for a given set of input values. To achieve that, we have to evaluate the `Block` function that we get from blendedDistortion. Let's have a look at the `Block` type again:
 
 ```fsharp
 type Block<'value, 'state> = 'state -> BlockOutput<'value, 'state>
 ```
 
-A `Block` needs (of course) state - the previous state - passed in to be able to evaluate it's next state and value. At the beginning of an evaluation cycle, what's the previous state then? There is none; so we need an initial state in form of `float * (float * unit)`.
+A `Block` needs (of course) state - the previous state - passed in to be able to evaluate its next state and value. At the beginning of an evaluation cycle, what's the previous state? There is none, so we need an initial state in form of `float * (float * unit)`.
 
 ```fsharp
     // we have to create some initial state to kick off the computation.
@@ -49,15 +49,15 @@ A `Block` needs (of course) state - the previous state - passed in to be able to
     let result = blendedDistortion 1.5 0.5 initialState
 ```
 
-The fact that we have to write initial state for a computation seems kind of annoying. Now imagine you are in a real world scenario where you reuse block in block, building more and more high level blocks. And another thing: You might not even know what is an appropriate initial value for blocks you didn't write. So providing initial values might be your concern, but could also be the concern of another author. Thus, we need a mechanism that enables us to:
+The fact that we have to write initial state for a computation seems kind of annoying. Now imagine you are in a real-world scenario in which you reuse `Block` in `Block`, building more and more high-level blocks. And another thing: you might not even know what is an appropriate initial value for blocks you didn't write. Thus, providing initial values might be your concern, but it could also be the concern of another author. What we need is a mechanism that enables us to:
 
-* omit intial state and
-* define it either on block-declaration side or
-* let it be defined inside of a block itself.
+* omit initial state; and
+* define it either on block-declaration side; or
+* let it be defined inside of a `Block` itself.
 
 ### Optional Initial State
 
-We can achieve this by making state optional. In that case, the block author can decide if initial state values are a curried part of his block function, or if they shall be handled completely inside the block function so that they are hard-coded and not parametrizable.
+We can achieve this by making state optional. In that case, the block author can decide if initial state values are a curried part of the `Block` function or if they will be handled completely inside the `Block` function so that they are hard-coded and not parameterizable.
 
 This means we have to change the signature of our `Block` type:
 
@@ -65,9 +65,9 @@ This means we have to change the signature of our `Block` type:
 type Block<'value, 'state> = 'state option -> BlockOutput<'value, 'state>
 ```
 
-Instead of a `'state` parameter, a block expects an optional `'state option` parameter.
+Instead of a `'state` parameter, a `Block` expects an optional `'state option` parameter.
 
-Now, our `bind` function has to be adapted. Since `bind` is just a kind of "relais" between functions that has to unpack and forward a previousely packed state tuple, the modification is quite local and easy to understand:
+Now our `bind` function has to be adapted. Since `bind` is just a kind of "relay" between functions that unpacks and forwards a previously packed state tuple, the modification is quite local and easy to understand:
 
 ```fsharp
 let bind
@@ -89,11 +89,11 @@ let bind
         // both optional, but block who use it can deal with that.
 ```
 
-They key point here is that an incoming tuple of `('stateA * 'stateB) option` gets transformed to a tuple of `'stateA option * 'stateB option`. The two tuple elements can then be passed to their corresponding `currentBlock` and `nextBlock` inside the bind function.
+The key point here is that an incoming tuple of `('stateA * 'stateB) option` gets transformed to a tuple of `'stateA option * 'stateB option`. The two tuple elements can then be passed to their corresponding `currentBlock` and `nextBlock` inside the bind function.
 
-The only thing that is missing is the adaption of the block functions themselves, namely `lowPass` and `fadeIn`:
+The only thing that is missing is the adaption of the `Block` functions themselves, namely `lowPass` and `fadeIn`.
 
-Since we assume that there is only 1 meaningful initial value for lowPass, we always want to default it to 0.0:
+For `lowPass`, we assume that there is only one meaningful initial value that we always want to default to 0.0:
 
 ```fsharp
 let lowPass timeConstant input =
@@ -107,7 +107,7 @@ let lowPass timeConstant input =
         { value = out; state = newState }
 ```
 
-For our fadeIn, we want the user to specify an initial value, since it might be that he doesn't want to fade from silence, but from half loudness:
+For our `fadeIn`, we want the user to specify an initial value, since it might be that he or she does not want to fade from silence, but from half loudness:
 
 ```fsharp
 let fadeIn stepSize initial (input: float) =
@@ -120,9 +120,9 @@ let fadeIn stepSize initial (input: float) =
         { value = result; state = newState }
 ```
 
-Now we have reached our goal: We can pass initial values in place where they are needed and omit them when the author wants to specify them on his own.
+Now we have reached our goal. We can pass initial values in places in which they are needed and omit them when the author wants to specify them on his or her own.
 
-So finally, we can just pass in `None` as initial state, so that code looks like this:
+So finally, we can just pass in `None` as the initial state, so that code looks like this:
 
 ```fsharp
 // for simplification, we pass in constant drive and input values to blendedDistortion.
@@ -131,9 +131,9 @@ let result = blendedDistortion 1.5 0.5 None
 
 ### Sequential Evaluation
 
-In the code above, we evaluates a block 1 time. This gives one `BlockResult` value, that contains the actual value and the accumulated state of that evaluation. Since we are not interested in a single value, but in a sequence of values for producing sound, we need to repeat the pattern from above.
+In the code above, we evaluates a `Block` one time. This gives one `BlockResult` value that contains the actual value and the accumulated state of that evaluation. Since we are not interested in a single value, but in a sequence of values for producing sound, we need to repeat the pattern.
 
-Assuming we have a sequence that produces random values (it's actually a list in F#, but it doesn't necessarily have to be a list; a sequence of values would be suficcient):
+Assuming we have a sequence that produces random values (here it's actually a list in F#, but it does not necessarily have to be a list; a sequence of values would be sufficient):
 
 ```fsharp
 let inputValues = [ 0.0; 0.2; 0.4; 0.6; 0.8; 1.0; 1.0; 1.0; 1.0; 1.0; 0.8; 0.6; 0.4; 0.2; 0.0 ]
@@ -143,15 +143,15 @@ We can plot that sequence, too:
 
 ![Input Values](./inputValues.png)
 
-Now we want to apply out blendedDistortion function to the inputValues sequence.
+Now we want to apply our `blendedDistortion` function to the `inputValues` sequence.
 
 <hint>
 
-Note that a `seq` in F# corresponds to `IEnumerable<T>` in .NET. This means that by just defining a sequence, data isn't necessarily persisted in memory - until the sequence is evaluated (e.g. by iterating over it). A sequence can be infinite and can be viewed as a stream of values.
+Note that a `seq<'a>` in F# corresponds to `IEnumerable<T>` in C#/.NET. This means that by just defining a sequence, data is not persisted in memory until the sequence is evaluated (e.g., by iterating over it). A sequence can be infinite and can be viewed as a stream of values. It can be copied to a list or an array, but its values can also be completely transient.
 
 </hint>
 
-Now we need a mechanism for mapping over a sequence of input values to a sequence of output values. Before we write code, keep one thing in mind: At the end, we have to provide a callback to an audio backend. This callback is called multiple times. The purpose of the callback is to take an input sequence (in case of an effect) and produce an output sequence of values. Since the callback is called multiple times, it has to store it's state somewhere. Since the callback resides at the boundary of our functional system and the I/O world, we will store the latest state in a mutable variable that is captured by a closure. Have a look:
+Now we need a mechanism for mapping over a sequence of input values to a sequence of output values. Before we write code, keep one thing in mind: at the end, we have to provide some kind of callback to an audio backend. This callback (as function pointer) is usually held by the audio backend and called multiple times when new data is needed. The purpose of the callback is to take an input array of values (in case of an effect) and produce an output array of values (usually, its indeed arrays). Since the callback is called multiple times, it has to store its state somewhere. Since the callback resides at the boundary of our functional system and the I/O world, we will store the latest state in a mutable variable that is captured by a closure (so you see that F# is not a "pure" functional language, but this can be an advantage and simplify work when it is appropriate). Have a look:
 
 ```fsharp
 // ('vIn -> Block<'vOut,'s>) -> (seq<'vIn> -> seq<BlockOutput<'vOut, 's>>)
@@ -167,15 +167,15 @@ let createEvaluatorWithStateAndValues (blockWithInput: 'vIn -> Block<'vOut,'s>) 
         }
 ```
 
-The `createEvaluatorWithStateAndValues` function takes itself a function. A single input value can be passed to that function, that evaluates to a block. That block can then be evaluated itself. It produces state that is assigned to the variable and the value that is yielded (together with the state) to our output sequence. This whole mechanism is wrapped in a function that takes an input array. This is the callback that could finally be passed to an audio backend. It can be evaluated multiple times, receiving the input buffer from the soundcard, maps it's values over with the given block function and outputs a sequence of values that is taken by the audio backend.
+The `createEvaluatorWithStateAndValues` function itself takes a function as parameter. A single input value can be passed to that function that evaluates to a `Block`. That `Block` can then be evaluated itself. It produces a state that is assigned to the variable and the value that is finally yielded (together with the state) to our output sequence. This whole mechanism is wrapped in a function that takes an input array. This is the callback that could finally be passed to an audio backend. It can be evaluated multiple times, receiving the input buffer from the soundcard, mapping its values over with the given `Block` function and outputting a sequence of values that is taken by the audio backend.
 
 <hint>
 
-In the next chapter, we will analyze the results from our `blendedDistortion` effect. For now, we will just have a look on **how** we can evaluate blocks against an input value sequence.
+In the next chapter, we will analyze the results from our `blendedDistortion` effect. For now, we will just look at _how_ we can evaluate blocks against an input value sequence.
 
 </hint>
 
-Using the `createEvaluatorWithStateAndValues` function is quite straight forward:
+Using the `createEvaluatorWithStateAndValues` function is quite straightforward:
 
 ```fsharp
 let evaluateWithStateAndValues = blendedDistortion 1.5 |> createEvaluatorWithStateAndValues
@@ -188,7 +188,7 @@ let outputStateAndValues_cycle2 = evaluateWithStateAndValues inputValues |> Seq.
 let outputStateAndValues_cycle3 = evaluateWithStateAndValues inputValues |> Seq.toList
 ```
 
-After creating the `evaluateWithStateAndValues` function, we can pass the input values sequence (witn n elements) to it and receive a sequence (with n elements) as output. This output sequence contains elements of type `BlockOutput`, that contain the actual value as well as the state of that cycle:
+After creating the `evaluateWithStateAndValues` function, we can pass the input values sequence (with n elements) to it and receive a sequence (with n elements) as output. This output sequence contains elements of type `BlockOutput` that contain the actual value together with the state of that cycle:
 
 ```fsharp
 [
@@ -210,11 +210,11 @@ After creating the `evaluateWithStateAndValues` function, we can pass the input 
 ]
 ```
 
-Now have a look at the state, more concrete: The first tuple element of the innermost tuple: This is the state of our `fadeIn` function. We defined that it should increase an internal factor by 0.1 every cycle (and then multiply the input with this value to have a fade in effect). The value you see here is the internal factor: It increases by 0.1 until the limit of 1.0 is reached. Looks like it is working - at least from an inner perspective.
+Now have a look at the state, more concretely. The first tuple element of the innermost tuple is the state of our `fadeIn` function. We defined that it should increase an internal factor by 0.1 every cycle (and then multiply the input with this value to have a fade-in effect). The value you see here is the internal factor that increases by 0.1 until the limit of 1.0 is reached. It looks like it is working - at least from an inner perspective.
 
 **Pause and Continue**
 
-Note that in our whole computation, there are no side effects at all, and our state is completely made up of values. This has some interesting consequences: We could takt the computation code (blendedDistortion) and some arbitrary state object from the list above. We could then (even on another computer) continue the computation by using the computation's code and the state we picked. The resulting elements would be the same on both machines. 
+Note that in our whole computation, there are no side effects at all, and our state is completely made up of values. This has some interesting consequences. We could take the computation code (`blendedDistortion`) and some arbitrary state object from the result list above. We could then (even on another computer) continue the computation by using the computation's code and the state we picked. The resulting elements would be the same on both machines. 
 
 **Values Only**
 

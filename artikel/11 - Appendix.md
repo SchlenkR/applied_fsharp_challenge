@@ -1,22 +1,24 @@
 
 ## Appendix
 
-In this section, there are some more concept covered in a loose and very brief way.
+In this section, some more concepts are covered in a loose and very brief way.
 
-The basis for this article is an experimental OSS project I started a year ago. It is called FluX (it was called FLooping before, and I will propably change the name again). You can find the project on [Github](https://github.com/ronaldschlenker/FluX).
+### II - OSS Experimental Project
 
-### I - Playing Audio
+The basis for this article is an experimental OSS project I started a year ago. It is called FluX (it was called FLooping before, and I will probably change the name again). You can find the project on [Github](https://github.com/ronaldschlenker/FluX).
+
+### II - Playing Audio
 
 Unfortunately, this topic is not covered in this article. So I suggest you have a look at FluX:
 
-* You can actually play sounds, using a Node audio server or CSAudio as backend.
-* There is a small library of effects and oscillators (hp, lp, sin, rect, tri, etc.)
+* you can actually play sounds, using a Node audio server or CSAudio as backend; and
+* there is a small library of effects and oscillators (hp, lp, sin, rect, tri, etc.)
 
 #### Reader State
 
-For real world audio applications, it is necessary to access some "global" values like the current sample rate or the position in a song. In FluX, this is done by extending `Block` with the capability of what is called `reader`. This makes it possible to the block author to access these "environmental" values. It is simply done by passing another parameter beside state to the block function.
+For real-world audio applications, it is necessary to access some "global" values like the current sample rate or the position in a song for an evaluation cycle. In FluX, this is done by extending `Block` with the capability of what is called `reader`. This makes it possible to the `Block` author to access these "environmental" values inside of a `Block` function. This is simply done by passing another parameter besides state to the `Block` function.
 
-### II - Feedback
+### III - Feedback
 
 <hint>
 
@@ -24,15 +26,15 @@ See `src/8_Feedback.fsx` as sample source.
 
 </hint>
 
-Since we can do serial and parallel composition and we have a way for blocks to keep local state, there is a thing missing: Make a past value from inside of a computation available in the next cycle.
+Since we can do serial and parallel composition and we have a way for blocks to keep local state, one thing is missing: making a past value from inside of a computation available in the next cycle.
 
 Here is a block diagram explaining this:
 
 // TODO: Blockschaltbild Feedback
 
-Achieving this with the `block { ... }` syntax is not an easy way. Although we could emit a result at the end of the computation, there would be no direct way of accessing it as state in the next cycle. The state that is collected inside the `block { ... }` is not accessible to the user.
+Achieving this with the `block { ... }` syntax is not easy. Although we could emit a result at the end of the computation, there would be no direct way of accessing it as state in the next cycle. The state that is collected inside the `block { ... }` is not accessible to the user.
 
-But there is a solution: Feedback!
+But there is a solution: feedback!
 
 ```fsharp
 type Fbd<'fbdValue, 'value> = { feedback: 'fbdValue; out: 'value }
@@ -50,7 +52,7 @@ let (<->) seed (f: 'fbdValue -> Block<Fbd<'fbdValue,'value>,'state>) =
         { value = feed.out; state = feed.feedback,Some innerState }
 ```
 
-The key here is that the user can specify a function that - with the help of the feedback operator `<->` is evaluated and resulting in a `Block` itself. This block accumulates the user's feedback value as well as the state of the actual computation and packs (later unpacks) it together.
+The key is that the user can specify a function that - with the help of the feedback operator `<->` - is evaluated and resulting in a `Block` itself. This `Block` accumulates the user's feedback value as well as the state of the actual computation and packs (later unpacks) it together.
 
 #### UseCase 1: Two Counter Alternatives
 
@@ -71,9 +73,9 @@ let counterAlt (seed: float) (increment: float) =
         }
 ```
 
-Look in the sample for evaluating the counter functions.
+Look at the sample for evaluating the counter functions.
 
-<hint>All block functions can be rewritten using the feedback operator.</hint>
+<hint>All `Block` functions can be rewritten using the feedback operator.</hint>
 
 #### UseCase 2: State in 'block { ... }' Syntax
 
@@ -99,9 +101,9 @@ let myFxWithFeedback input =
         }
 ```
 
-### III - Arithmetic operators
+### IV - Arithmetic operators
 
-Sometimes, you want to make some arithmetic calculation from a block's result *directly*, and not use the identifier of the bound value:
+Sometimes you want to make some arithmetic calculation from a `Block`'s result _directly_ and not use the identifier of the bound value:
 
 Instead of this...
 
@@ -125,7 +127,7 @@ block {
 }
 ```
 
-...or you even want to add 2 blocks directly:
+...or you even want to add two blocks directly:
 
 ```fsharp
 block {
@@ -135,7 +137,7 @@ block {
 }
 ```
 
-This is possible with a little tricky mechanism incorporating F# "Statically Resolved Type Parameters", type extensions, and a Single Case Union. An explanation why and how this works is worth an article. Unfortunately, I cannot find the link to a presentation I once had, so please forgive me not referencing the author of this idea.
+This is possible with a more or less tricky mechanism incorporating an F# language feature called "Statically Resolved Type Parameters" in combination with a Single Case Union and operator overloading. An explanation of why and how this works is worth an article. Unfortunately, I cannot find the link to a presentation I once had, so please forgive me for not referencing the author of this idea.
 
 Anyway, here is the code (as an example for `+`):
 
@@ -161,3 +163,7 @@ type ArithmeticExt = ArithmeticExt with
 
 let inline (+) a b = (?<-) ArithmeticExt a b
 ```
+
+### V - Modulation
+
+TODO

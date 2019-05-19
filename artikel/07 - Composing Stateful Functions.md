@@ -1,27 +1,27 @@
 
 ## Composing Stateful Functions
 
-So how can a composition function "record and feed back" work? Remember: We do not want to give a "name" or "address" to our blocks - their identity shall be solely based on their place inside the computation. The composition function itself shall consequently also be pure.
+So how can a composition function "record and feed back" work? Remember: we do not want to give "names" or "addresses" to our blocks - their identity shall be solely based on their place inside the computation. The composition function itself will consequently also be pure.
 
-### Pick up and Delivery
+### Pick Up and Delivery
 
-Let's call the overall strategy "Pick Up and Delivery", and it shall work like this:
+Let's call the overall strategy "Pick Up and Delivery," and it will work like this:
 
 * In a whole computation, all blocks are evaluated one after another.
 
-* The actual value of an evaluated block is passed to the rest of the computation.
+* The actual value of an evaluated `Block` is passed to the rest of the computation.
 
 * **Pick Up:**
   
-  The output states of the blocks are accumulated: The output state of a block and the output state of a following block are packed together (in a tuple). This "state pack" shall be passed to the next block evaluation, that's output is then packed again with the state of that block, and so on. So in the end, we have:
+The output states of the blocks are accumulated. The output state of a `Block` and the output state of a following `Block` are packed together (in a tuple). This "state pack" will be passed to the next `Block` evaluation, that one's output is then packed again with the state of that `Block`, and so on. So in the end, we have:
   
-  state, packed together with the next state, that is packed together with next state, that is packed...
+state, packed together with the next state, that is packed together with next state, that is packed...
 
 * **Delivery:**
   
-  The final state pack that is emitted from the whole computation (alongside with the final actual output value) is then used as input state for the next evaluation cycle. That nested state pack is then unpacked piece by piece, evaluation by evaluation - like a FIFO buffer. In that way, the local state of a block from the last evaluation is addressed and passed into the corresponsing block of the current evaluation.
+The final state pack that is emitted from the whole computation (alongside with the final actual output value) is then used as input state for the next evaluation cycle. That nested state pack is then unpacked piece by piece, evaluation by evaluation - like a FIFO buffer. In that way, the local state of a `Block` from the last evaluation is addressed and passed into the corresponding `Block` of the current evaluation.
 
-Since this article is all about synthesizers - let's synthesize a composition function according to the recipe from above - and we call it `bind`:
+Since this article is all about synthesizers, let's synthesize a composition function according to this recipe. We call it `bind`:
 
 ```fsharp
 let bind
@@ -51,24 +51,22 @@ let bind
         { value = nextBlockOutput.value; state = currentBlockOutput.state, nextBlockOutput.state }
 ```
 
-You can read the code comments that explain the stept. In addition, there are some more insights:
+You can read the code comments that explain the step. In addition, there are some more insights:
 
-* `bind` takes a block and the rest of the computation.
-* `bind` itself evaluates to a block: that block can then be composed again using `bind`, and so on!
-* `bind` can be seen as a kind of "hook" that lies in between our computation, and can thus handle all the state aspects for the user.
+* `bind` takes a `Block` and the rest of the computation;
+* `bind` itself evaluates to a `Block`, which can then be composed again using `bind`, and so on; and
+* `bind` can be seen as a kind of "hook" that lies in between our computation and can thus handle all the state aspects for the user.
 
-The last 2 points are essential: bind enables us to "nest" functions and therefor nest their state, and bind builds up a data context when it is used inside of the "rest functions". This means: A nested "rest functions" has access to all given values of it's enclosing functions.
-
-TODO: Bild mit geschachtelten Funktionen
+The last two points are essential: bind enables us to "nest" functions and therefor nest their state, and bind builds up a data context when it is used inside of the "rest functions." This means a nested "rest function" has access to all given values of its enclosing functions.
 
 ### Using Blocks
 
-Since here, we have 2 important things in our hands:
+Now, we have two important things in our hands:
 
-* We know how stateful functions look like, and we call them "Block" functions.
-* We have a way of composing these block functions which is implemented in the "bind" function.
+* we know how stateful functions look like, and we call them "Block" functions; and
+* we have a way of composing these `Block` functions which is implemented in the "bind" function.
 
-Having this in mind, we can modify our use case example "blendedDistortion" in way that it fits with "Blocks and bind".
+Having this in mind, we can modify our use case example "blendedDistortion" in way that fits with "blocks and bind."
 
 Here it is in the desired form:
 
@@ -84,19 +82,19 @@ let blendedDistortion drive input =
     gained
 ```
 
-Here, we treat lowPass and fadeIn as a pure function - which is what we wanted - but which also doesn't work. We then used OOP that solved the issue, but forced us to create and manage references to instances.
+Here, we treat lowPass and fadeIn as pure functions - which is what we wanted - but which also does not work. We then use OOP that solves the issue, but forces us to create and manage references to instances.
 
-Now that we have introduced Blocks and the "Pick Up and Delivery" strategy (implemented by the 'bind' combinator function), let's see how far we come.
+Now that we have introduced blocks and the "Pick Up and Delivery" strategy (implemented by the `bind` combinator function), let's see how far we have come.
 
-We defined that bind takes a Block and the "rest of the computation". Since in a functional language, "rest of computation" is an expression, we defined it as as function of the form ``` float -> Block<'value, 'state> ```. TODO: Warum?
+We defined that `bind` takes a `Block` and the "rest of the computation." Since in a functional language, "rest of computation" is an expression (since everything is an expression), we defined it as a function of the form ``` float -> Block<'value, 'state> ```.
 
-In order to be able to do so, we have to
+To be able to do so, we have to
 
-* "break up" the code sample from above into pieces of "rest functions",
-* in the desired form (``` float -> Block<'value, 'state> ```),
-* and do that every time a value from a Block is needed,
-* and use 'bind' to compose the pieces.
+* break up the code sample from above into pieces of "rest functions";
+* in the desired form (``` float -> Block<'value, 'state> ```);
+* and do that every time a value from a `Block` is needed; and
+* use 'bind' to compose the pieces.
 
 Let's do it! 
 
-<hint> If you are already familiar with monads and/or F# computation expressions, you can skip this chapter. Otherwise, keep reading.</hint>
+<hint>If you are already familiar with monads and/or F# computation expressions, you can skip this chapter.</hint>
