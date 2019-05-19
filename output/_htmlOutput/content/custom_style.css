@@ -4,6 +4,10 @@
     margin: auto;
 }
 
+#content {
+    margin: 10px;
+}
+
 #toc > ol {
     padding-left: 20px;
 }
@@ -51,6 +55,21 @@ code:not([lang]) {
     padding: 2px 4px;
 }
 
+/* pre.fssnip {
+    white-space: pre-wrap !important;
+} */
+pre.fssnip code {
+    font-size: 0.95em;
+    line-height: 0.95em;
+}
+@media screen and (max-width: 850px) {
+    pre.fssnip {
+        white-space: pre-wrap !important;
+        font-size: 8px;
+        line-height: 20px;
+    }
+}
+
 img {
     display: block;
     margin: 10px auto;
@@ -80,10 +99,6 @@ img[src*="calculator"] {
     margin-top: 0;
     margin-left: 0;
     margin-right: 0;
-} 
-.col-2 pre code span {
-    font-size: 0.95em;
-    line-height: 0.95em;
 } 
 
 
