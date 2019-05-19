@@ -1,6 +1,12 @@
 
 ## Composing Stateful Functions
 
+<hint>
+
+See [src/3_Stateful_FP.fsx] as sample source.
+
+</hint>
+
 So how can a composition function "record and feed back" work? Remember: we do not want to give "names" or "addresses" to our blocks - their identity shall be solely based on their place inside the computation. The composition function itself will consequently also be pure.
 
 ### Pick Up and Delivery

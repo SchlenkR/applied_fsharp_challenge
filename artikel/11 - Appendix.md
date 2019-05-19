@@ -3,30 +3,18 @@
 
 In this section, some more concepts are covered in a loose and very brief way.
 
-### II - OSS Experimental Project
 
-The basis for this article is an experimental OSS project I started a year ago. It is called FluX (it was called FLooping before, and I will probably change the name again). You can find the project on [Github](https://github.com/ronaldschlenker/FluX).
-
-### II - Playing Audio
-
-Unfortunately, this topic is not covered in this article. So I suggest you have a look at FluX:
-
-* you can actually play sounds, using a Node audio server or CSAudio as backend; and
-* there is a small library of effects and oscillators (hp, lp, sin, rect, tri, etc.)
-
-#### Reader State
-
-For real-world audio applications, it is necessary to access some "global" values like the current sample rate or the position in a song for an evaluation cycle. In FluX, this is done by extending `Block` with the capability of what is called `reader`. This makes it possible to the `Block` author to access these "environmental" values inside of a `Block` function. This is simply done by passing another parameter besides state to the `Block` function.
-
-### III - Feedback
+### Appendix I - Feedback
 
 <hint>
 
-See `src/8_Feedback.fsx` as sample source.
+See [src/8_Feedback.fsx] as sample source.
 
 </hint>
 
 Since we can do serial and parallel composition and we have a way for blocks to keep local state, one thing is missing: making a past value from inside of a computation available in the next cycle.
+
+This can sometimes be done by extracting a "closed loop" in a sub-block, but when a past value from inside of a computation is needed in more than one position, this won't work.
 
 Here is a block diagram explaining this:
 
@@ -101,7 +89,16 @@ let myFxWithFeedback input =
         }
 ```
 
-### IV - Arithmetic operators
+
+
+
+### Appendix II - Arithmetic operators
+
+<hint>
+
+See [src/9_Arithmetic.fsx] as sample source.
+
+</hint>
 
 Sometimes you want to make some arithmetic calculation from a `Block`'s result _directly_ and not use the identifier of the bound value:
 
@@ -164,6 +161,141 @@ type ArithmeticExt = ArithmeticExt with
 let inline (+) a b = (?<-) ArithmeticExt a b
 ```
 
-### V - Modulation
 
-TODO
+
+
+### Appendix III - Modulation ("map" and "apply")
+
+<hint>
+
+See [src/10_Modulation_with_map_and_apply.fsx] as sample source.
+
+</hint>
+
+Quite often, you want to modulate parameters of one `Block` by the output value of another `Block`. Imagine this: You have an oscillator (e.g. a sine wave generator), and its frequence is not a constant value. Instead, it is the output value of another oscillator, that has a very low frequency (this is called LFO). The result is a sound that might remind you of a police cars siren.
+
+I created a more comprehensive example, incorporating a `counter` and a `toggleAB` block:
+
+```fsharp
+/// helper for working with optional state and seed value
+let getStateOrSeed seed maybeState =
+    match maybeState with
+    | None -> seed
+    | Some v -> v
+
+let counter (seed: float) (increment: float) =
+    Block <| fun maybeState ->
+        let state = getStateOrSeed seed maybeState
+        let res = state + increment
+        {value=res; state=res}
+
+type AOrB = | A | B
+
+/// from evaluation to evaluation take a, then b, then a, then b, ...
+let toggleAB a b =
+    Block <| fun maybeState ->
+        let state = getStateOrSeed A maybeState
+        let res,newState =
+            match state with
+            | A -> a,B
+            | B -> b,A
+        { value=res; state=newState }
+```
+
+We can then use 2 `counter` and feed their results to `toggleAB`:
+
+```fsharp
+block {
+    let! count1 = counter 0.0 1.0
+    let! count2 = counter 0.0 20.0
+    let! result = toggleAB count1 count2
+    return result
+}
+|> evaluateGen
+
+// Result: [1.0; 40.0; 3.0; 80.0; 5.0; 120.0; 7.0; 160.0; 9.0; 200.0]
+```
+
+This works, but it can be annoying forced to always introduce an identifier (`count1`, `count2`), even if the values bound to them are only used in a single place.
+
+Luckily, there are 2 functions called `map` and `apply` that help:
+
+**map:**
+
+```fsharp
+let map (f: 'a -> 'b) (l: Block<'a,_>) : Block<'b,_> =
+    block {
+        let! resL = l
+        let result = f resL
+        return result
+    }
+let ( <!> ) = map
+```
+
+You might know `map` from other languages in the context of list processing, where the inner type of a list changes, but the domain (lists) remain. In C#, it is called `Select`, but with `f` and `l` parameters reversed.
+
+In the domain of `Block`, map takes a function, and another `Block`, evaluates that block to get it's value, applies that value to the given function and returns it (in form of a `Block` - of course).
+
+"What is that function f", you might ask yourself now. That function is nothing else but our `toggleAB` function: But `toggleAB` is of ``` 'a -> 'a -> Block<'a,_> ```? That's true, but remember currying: The first part is just ``` 'a -> 'a ```, which is a specialization of ``` 'a -> 'b ```. That means that after using `map`, the value that is wrapped inside the resulting `Block` is the partially applied function of `toggleAB` (``` 'a -> Block<'a,_> ```).
+
+What we need now is a function that "unwraps" that partially applied function from the resulting block and applies a resulting value from another given `Block` to finally have the result available. We call it "apply".
+
+**apply:**
+
+```fsharp
+let apply
+        (fB: Block<'a -> Block<'b,_>, _>)
+        (xB: Block<'a,_>)
+        : Block<'b,_> =
+    block {
+        let! f = fB
+        let! x = xB
+        let fRes = f x
+        
+        // hint: So far, we have always bound the result of a block to an identifier and used "return ident"
+        // to yield the final result.
+        // Here we use "return!", which simply yields the given block directly.
+        // to enable this, implement 'ReturnFrom(x)' as method of the block builder type.
+        // Example here: 4_Optional_Initial_Values / BlockBuilder.ReturnFrom
+        return! fRes
+    }
+let ( <*> ) = apply
+```
+
+`apply` can take the result of a `map`, and another `Block`, that serves as parameter for the given _inner_ function that resides inside a `Block`. It applies the value `x` to the inner function `f` and returns the resulting `Block`.
+
+**Example:**
+
+```fsharp
+// Alternative 2: use map and apply directly
+toggleAB <!> (counter 0.0 1.0) <*> (counter 0.0 20.0)
+|> evaluateGen
+// Result: [1.0; 40.0; 3.0; 80.0; 5.0; 120.0; 7.0; 160.0; 9.0; 200.0]
+
+
+// Hint: use map and apply also work inside a block computation expression
+block {
+    let! result = toggleAB <!> (counter 0.0 1.0) <*> (counter 0.0 20.0)
+    return result
+}
+|> evaluateGen
+// Result: [1.0; 40.0; 3.0; 80.0; 5.0; 120.0; 7.0; 160.0; 9.0; 200.0]
+```
+
+
+
+### Appendix IV - OSS Experimental Project
+
+The basis for this article is an experimental OSS project I started a year ago. It is called FluX (it was called FLooping before, and I will probably change the name again). You can find the project on [Github](https://github.com/ronaldschlenker/FluX).
+
+#### Playing Audio
+
+Unfortunately, this topic is not covered in this article. So I suggest you have a look at FluX:
+
+* you can actually play sounds, using a Node audio server or CSAudio as backend; and
+* there is a small library of effects and oscillators (hp, lp, sin, rect, tri, etc.)
+
+#### Reader State
+
+For real-world audio applications, it is necessary to access some "global" values like the current sample rate or the position in a song for an evaluation cycle. In FluX, this is done by extending `Block` with the capability of what is called `reader`. This makes it possible to the `Block` author to access these "environmental" values inside of a `Block` function. This is simply done by passing another parameter besides state to the `Block` function.
+

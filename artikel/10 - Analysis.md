@@ -1,6 +1,12 @@
 
 ## Analysis
 
+<hint>
+
+See [src/6_Retracing_Stateful_FP.fsx] as sample source.
+
+</hint>
+
 Now we can write blocks, understand the inner mechanism of composing them, and evaluate them. Time to have a closer look on our `blendedDistortion` use case. In the next chapter, we will dissect the parts of `blendedDistortion` step by step and retrace the flow of values through our computation.
 
 Before we begin, the following samples use a constant set of parameters used in our computations:
@@ -19,12 +25,6 @@ let fadeInStepSize = 0.1
 ```fsharp
 let inputValues = [ 0.0; 0.2; 0.4; 0.6; 0.8; 1.0; 1.0; 1.0; 1.0; 1.0; 0.8; 0.6; 0.4; 0.2; 0.0 ]
 ```
-
-<hint>
-
-Please take a look at the `src/6_Retracing_Stateful_FP.fsx` file in the github repository for details.
-
-</hint>
 
 ### Amplification
 

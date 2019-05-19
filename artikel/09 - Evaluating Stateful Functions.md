@@ -1,6 +1,12 @@
 
 ## Evaluating Stateful Functions
 
+<hint>
+
+See [src/4_Optional_Initial_Values.fsx] and [src/5_Evaluation.fsx] as sample source.
+
+</hint>
+
 In the previous chapter, we learned that we can compose stateful `Block` functions easily by using the `block` computation expression and `let!` instead of `let` when we want to bind the output value of a `Block` function to an identifier and use it in the rest of our computation.
 
 But in the end, we are not interested in state - we need the pure output values of our computation to send them to the soundcard's buffer. For us, it will be enough to just have these values available as sequence.

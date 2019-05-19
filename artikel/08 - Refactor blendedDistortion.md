@@ -1,6 +1,12 @@
 
 ## Rewrite blendedDistortion with "bind"
 
+<hint>
+
+See [src/3_Stateful_FP.fsx] as sample source.
+
+</hint>
+
 In this chapter, we will modify our `blendedDistortion` sample to achieve the following:
 
 * explain how `bind` is finally used;

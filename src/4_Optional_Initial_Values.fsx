@@ -46,6 +46,7 @@ let returnB x = Block <| fun unusedState -> { value = x; state = () }
 type BlockBuilder() =
     member this.Bind(block, rest) = bind block rest
     member this.Return(x) = returnB x
+    member this.ReturnFrom(x) : Block<_,_> = x
 let block = BlockBuilder()
 
 module Blocks =

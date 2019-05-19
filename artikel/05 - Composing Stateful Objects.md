@@ -1,6 +1,12 @@
 
 ## Composing Stateful Objects
 
+<hint>
+
+See [src/2_Stateful_OOP.fsx] as sample source.
+
+</hint>
+
 As the name implies, we are first going to use an approach called "Object Oriented Programming." If you do not know what that is, read this:
 
 <excurs data-name="OOP">
