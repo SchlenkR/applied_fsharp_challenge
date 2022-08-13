@@ -3,7 +3,7 @@ This is the repository containing the article and the samples / code sources of 
 
 ## Readable Version
 
-You can find the final article [here](https://RonaldSchlenker.github.io/applied_fsharp_challenge/).
+You can find the final article [here](https://github.com/RonaldSchlenker/applied_fsharp_challenge/blob/master/docs/index.md).
 
 ## Tagged Version
 
