@@ -6,23 +6,22 @@ open FSharp.Formatting.Razor
 open System
 open System.IO
 
-let articleName = "Digital_Signal_Processing_with_FSharp"
-
 let generate() =
   let ( </> ) a b = a + "\\" + b
 
+  let articleName = "index"
   let sourceDir = __SOURCE_DIRECTORY__ </> ".." </> "artikel"
-  let outputDir = __SOURCE_DIRECTORY__ </> "_htmlOutput"
+  let outputDir = __SOURCE_DIRECTORY__ </> ".." </> "docs"
   let outputFileName = outputDir </> articleName + ".html"
   let mergedFileName = outputDir </> articleName + ".md"
 
   // Load the template & specify project information
   let projTemplate = __SOURCE_DIRECTORY__ + "\\template.html"
   let projInfo =
-    [ "page-description", "TODO"
+    [ "page-description", "Digital Signal Processing with F#"
       "page-author", "Ronald Schlenker"
-      "github-link", "https://github.com/TODO"
-      "project-name", "TODO" ]
+      "github-link", "https://github.com/RonaldSchlenker/applied_fsharp_challenge"
+      "project-name", "fsharp_dsp" ]
 
   Directory.GetFiles (outputDir, "*.*")
   |> Seq.iter File.Delete

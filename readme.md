@@ -3,7 +3,7 @@ This is the repository containing the article and the samples / code sources of 
 
 ## Readable Version
 
-You can find the final article [here](http://binarygears.de/AppliedFSharpChallenge/Digital_Signal_Processing_with_FSharp.html).
+You can find the final article [here](https://RonaldSchlenker.github.io/applied_fsharp_challenge/).
 
 ## Tagged Version
 
@@ -15,4 +15,4 @@ Please use the tag **contribution_2** of this repository to get the version that
 
 **src:** Contains all code samples and sources. run `PS src> ./.paket/paket.exe install` before playing around. You can use F# interactive to evaluate the samples live. Please ignore the `bak` folder.
 
-**output:** Contains code to generate the article (html) our of the markdown files. Run `PS output> genHtml.cmd` or make `paket install` and run `genHtml.fsx` with fsi. The rendered result is in `./output/_htmlOutput/article.html`.
+**output:** Contains code to generate the article (html) our of the markdown files. Run `PS output> genHtml.cmd` or make `paket install` and run `genHtml.fsx` with fsi. The rendered result is in `./docs/index.html`.
