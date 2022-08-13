@@ -1,7 +1,6 @@
 
 <div>
     <p>You can find this article on <a href="https://github.com/ronaldschlenker/applied_fsharp_challenge">GitHub</a>.</p>
-    <p><a href="http://binarygears.de/impressum">Impressum</a></p>
     <p>(c) Ronald Schlenker, May 2019</p>
     <hr />
 </div>
